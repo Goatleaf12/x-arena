@@ -2,24 +2,28 @@ import * as THREE from 'three'
 
 export const CHARACTERS = [
   {
-    id: 'momo', name: 'Momo', tag: 'BOUNCY BUNNY',
+    id: 'momo', name: 'Momo', tag: 'BOUNCY BUNNY', tagZh: '弹跳兔',
     color: 0xff9ec7, belly: 0xffe3ef, accent: 0xff5d8f, earColor: 0xff7ab8,
-    desc: 'Bouncy bunny with the biggest ears in the arena. Hoppy, happy, hard to hit.'
+    desc: 'Bouncy bunny with the biggest ears in the arena. Hoppy, happy, hard to hit.',
+    descZh: '竞技场里耳朵最大的弹跳兔。蹦蹦跳跳、快快乐乐，很难击中。'
   },
   {
-    id: 'bibo', name: 'Bibo', tag: 'AFRO BEAR',
+    id: 'bibo', name: 'Bibo', tag: 'AFRO BEAR', tagZh: '爆炸头熊',
     color: 0x9b7ede, belly: 0xd9ccff, accent: 0x6d28d9, earColor: 0x7c5cd6,
-    desc: 'Chill purple bear with a perfect afro. Slow to anger, quick on the trigger.'
+    desc: 'Chill purple bear with a perfect afro. Slow to anger, quick on the trigger.',
+    descZh: '淡定的紫色熊，顶着完美爆炸头。不易动怒，出手却很快。'
   },
   {
-    id: 'kiko', name: 'Kiko', tag: 'SNEAKY CAT',
+    id: 'kiko', name: 'Kiko', tag: 'SNEAKY CAT', tagZh: '狡猾猫',
     color: 0x4fd1c5, belly: 0xd2f7f2, accent: 0x0e7490, earColor: 0x2bb3a6,
-    desc: 'Sneaky teal cat who always lands on her feet — usually behind you.'
+    desc: 'Sneaky teal cat who always lands on her feet — usually behind you.',
+    descZh: '狡猾的青色猫，总能稳稳落地 — 通常就在你身后。'
   },
   {
-    id: 'pipi', name: 'Pipi', tag: 'SUNNY CHICK',
+    id: 'pipi', name: 'Pipi', tag: 'SUNNY CHICK', tagZh: '阳光小鸡',
     color: 0xffd23f, belly: 0xfff3b0, accent: 0xf59e0b, earColor: 0xffb703,
-    desc: 'Sunny little chick with a big beak and bigger confidence. Cheep shot!'
+    desc: 'Sunny little chick with a big beak and bigger confidence. Cheep shot!',
+    descZh: '阳光小鸡，大嘴巴，自信满满。啾啾一击！'
   }
 ]
 

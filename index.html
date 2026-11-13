@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SPLAT — Play. Win. SPLAT. | X Arena Paintball Shooter</title>
-<meta name="description" content="SPLAT: a cute cartoon 3D paintball arena shooter. Pick your fighter, splat the bots, and climb the board. The SPLAT token launches soon on Gang.fun (BSC)." />
+<meta name="description" content="SPLAT: a cute cartoon 3D paintball arena shooter. Pick your fighter, splat the bots, and climb the board. The SPLAT token is live on Gang.fun (BSC)." />
 <link rel="icon" type="image/png" href="./assets/splat-favicon.png" />
 <style>
   :root{
@@ -192,6 +192,20 @@
   .token-ca .l{font-size:10.5px;letter-spacing:.14em;color:#9db4ff;font-weight:700}
   .token-ca code{display:block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:#ffe9a8;word-break:break-all;margin:6px 0 8px}
   .ca-copy{font-size:12px;font-weight:800;color:#1a1200;background:linear-gradient(90deg,#f5b301,#ff8a3d);border:0;border-radius:999px;padding:6px 16px;cursor:pointer}
+  .live-progress{margin-top:16px;text-align:left}
+  .live-progress .l{font-size:10.5px;letter-spacing:.14em;color:#9db4ff;font-weight:700}
+  .live-bar{height:10px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.14);border-radius:999px;margin-top:8px;overflow:hidden}
+  .live-fill{height:100%;width:0%;background:linear-gradient(90deg,#34d399,#f5b301);border-radius:999px;transition:width .6s ease}
+  .live-stats{font-size:13px;color:#dbe4ff;margin-top:8px;line-height:1.5}
+  .live-stats b{color:#ffe9a8}
+  .live-updated{font-size:11px;color:#93a1c9;margin-top:4px}
+  .how-to-buy{font-size:13px;color:#dbe4ff;line-height:1.6;margin-top:14px;text-align:left;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px 14px}
+  .how-to-buy b{color:#ffe9a8}
+  .agents-link{display:inline-block;margin-top:16px;font-size:13px;font-weight:700;color:#9db4ff;text-decoration:none}
+  #lang-toggle{position:absolute;top:16px;right:16px;z-index:5;background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.25);color:#fff;font-weight:800;font-size:13px;
+    padding:8px 16px;border-radius:999px;cursor:pointer;backdrop-filter:blur(6px)}
+  #lang-toggle:hover{border-color:rgba(255,255,255,.55)}
   .site-footer{margin:26px 0 10px;font-size:14px;font-weight:800;letter-spacing:.14em;color:#cdd8ff;text-align:center}
   /* end screen */
   #end-stats{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:20px 0 6px}
@@ -221,14 +235,14 @@
 <!-- HUD -->
 <div id="hud" class="hidden">
   <div id="hud-top-left" class="hud-panel">
-    <div class="label">SCORE</div>
+    <div class="label" data-i18n="hudScore">SCORE</div>
     <div id="hud-score">0</div>
     <div id="hud-kills">0 splats &bull; 0 SPLAT</div>
     <div id="lobby-count"></div>
   </div>
   <div id="hud-timer" class="hud-panel">2:00</div>
   <div id="hud-top-right" class="hud-panel">
-    <div id="hud-splat"><span class="label">SPLAT COLLECTED</span><span id="hud-splat-n">0</span></div>
+    <div id="hud-splat"><span class="label" data-i18n="hudSplatCollected">SPLAT COLLECTED</span><span id="hud-splat-n">0</span></div>
   </div>
   <div id="killfeed"></div>
   <div id="crosshair"><div class="dot"></div></div>
@@ -238,7 +252,7 @@
     <div id="hud-health-bar"><div id="hud-health-fill"></div></div>
     <div id="hud-health-text">HEALTH 100</div>
   </div>
-  <div id="hint-bar">WASD move &nbsp;&bull;&nbsp; Mouse aim &nbsp;&bull;&nbsp; Click splat &nbsp;&bull;&nbsp; Arrow keys turn</div>
+  <div id="hint-bar" data-i18n-html="hintBar">WASD move &nbsp;&bull;&nbsp; Mouse aim &nbsp;&bull;&nbsp; Click splat &nbsp;&bull;&nbsp; Arrow keys turn</div>
   <button id="mute-btn" title="Mute / unmute sound">&#128266;</button>
   <div id="lobby-chat" class="hidden"></div>
   <div id="touch-controls">
@@ -250,46 +264,50 @@
 
 <!-- CHARACTER SELECT -->
 <div id="select-screen" class="screen">
+  <button id="lang-toggle" type="button">🌐 中文</button>
   <div class="logo-badge"><img src="./assets/splat-logo.png" alt="SPLAT logo" /> SPLAT</div>
   <h1 class="title"><span class="x">X</span> <span class="arena">ARENA</span></h1>
-  <p class="subtitle">A cute paintball arena shooter. Pick your fighter, splat the bots,
+  <p class="subtitle" data-i18n-html="subtitle">A cute paintball arena shooter. Pick your fighter, splat the bots,
     and grab <b>SPLAT points</b> — the home of the <b>SPLAT</b> token, live now on Gang.fun.</p>
   <div id="char-cards"></div>
   <div class="name-row">
-    <label for="player-name">Your lobby name</label>
+    <label for="player-name" data-i18n="lobbyName">Your lobby name</label>
     <input id="player-name" type="text" maxlength="32" placeholder="Guest-XXXX" autocomplete="off" />
   </div>
-  <button id="start-btn" class="big-btn">PLAY &nbsp;&#9654;</button>
+  <button id="start-btn" class="big-btn" data-i18n-html="playBtn">PLAY &nbsp;&#9654;</button>
   <div class="controls-row">
-    <div class="key-chip"><b>WASD</b> move</div>
-    <div class="key-chip"><b>Mouse</b> aim</div>
-    <div class="key-chip"><b>Click</b> shoot paint</div>
-    <div class="key-chip"><b>Arrows</b> turn camera</div>
-    <div class="key-chip"><b>Esc</b> pause</div>
+    <div class="key-chip" data-i18n-html="keyMove"><b>WASD</b> move</div>
+    <div class="key-chip" data-i18n-html="keyAim"><b>Mouse</b> aim</div>
+    <div class="key-chip" data-i18n-html="keyShoot"><b>Click</b> shoot paint</div>
+    <div class="key-chip" data-i18n-html="keyTurn"><b>Arrows</b> turn camera</div>
+    <div class="key-chip" data-i18n-html="keyPause"><b>Esc</b> pause</div>
   </div>
-  <p class="footnote">100% original characters, code &amp; art — no profile photos, no sign-in.<br/>
+  <p class="footnote" data-i18n-html="footnote">100% original characters, code &amp; art — no profile photos, no sign-in.<br/>
   Desktop &amp; keyboard recommended. Best in Chrome / Edge.</p>
 
   <section id="token-section">
     <div class="token-card">
       <img class="token-logo" src="./assets/splat-logo.png" alt="SPLAT logo" />
-      <h2>SPLAT — THE TOKEN</h2>
-      <p class="token-status"><span class="status-dot"></span> LIVE on Gang.fun — trading now</p>
-      <p class="token-blurb">SPLAT is the token of this arena — a Gang.fun V3 bonding-curve token on BNB Chain.
+      <h2 data-i18n="tokenTitle">SPLAT — THE TOKEN</h2>
+      <p class="token-status"><span class="status-dot"></span><span data-i18n="tokenLive">LIVE on Gang.fun — trading now</span></p>
+      <p class="token-blurb" data-i18n="tokenBlurb">SPLAT is the token of this arena — a Gang.fun V3 bonding-curve token on BNB Chain.
         The token is live on the curve; it graduates to PancakeSwap at 6 BNB raised.</p>
       <div class="token-stats">
-        <div class="token-stat"><div class="v">1,000,000,000</div><div class="l">TOTAL SUPPLY</div></div>
-        <div class="token-stat"><div class="v">800M / 200M</div><div class="l">CURVE / POOL</div></div>
-        <div class="token-stat"><div class="v">2%</div><div class="l">POOL TAX (BUY / SELL)</div></div>
-        <div class="token-stat"><div class="v">0%</div><div class="l">DIVIDEND</div></div>
-        <div class="token-stat"><div class="v">6 BNB</div><div class="l">GRADUATION TARGET</div></div>
-        <div class="token-stat"><div class="v">70% of 1%</div><div class="l">CREATOR FEE → PRIZE POOL</div></div>
+        <div class="token-stat"><div class="v">1,000,000,000</div><div class="l" data-i18n="statSupply">TOTAL SUPPLY</div></div>
+        <div class="token-stat"><div class="v">800M / 200M</div><div class="l" data-i18n="statCurve">CURVE / POOL</div></div>
+        <div class="token-stat"><div class="v">2%</div><div class="l" data-i18n="statTax">POOL TAX (BUY / SELL)</div></div>
+        <div class="token-stat"><div class="v">0%</div><div class="l" data-i18n="statDividend">DIVIDEND</div></div>
+        <div class="token-stat"><div class="v">6 BNB</div><div class="l" data-i18n="statGrad">GRADUATION TARGET</div></div>
+        <div class="token-stat"><div class="v">70% of 1%</div><div class="l" data-i18n="statFee">CREATOR FEE → PRIZE POOL</div></div>
       </div>
-      <p class="token-prize">🏆 Prize pool: the creator fee (70% of the 1% curve fee) accrues from every curve trade and funds future prizes.</p>
-      <div class="token-ca"><div class="l">CONTRACT ADDRESS (BSC)</div><code>0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd</code><button class="ca-copy" type="button" onclick="navigator.clipboard &amp;&amp; navigator.clipboard.writeText('0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd'); this.textContent='Copied ✓'; setTimeout(()=>this.textContent='Copy',1500)">Copy</button></div>
-      <a class="token-link" href="https://gang.fun/token/0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd" target="_blank" rel="noopener">Trade SPLAT on Gang.fun ↗</a>
-      <a class="token-link" href="https://bscscan.com/token/0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd" target="_blank" rel="noopener">View contract on BscScan ↗</a>
-      <p class="token-note">Always verify the contract address above before trading. In-game SPLAT points are game points, not tokens.</p>
+      <div class="live-progress"><div class="l" data-i18n="liveProgress">LIVE CURVE PROGRESS</div><div class="live-bar"><div class="live-fill" id="live-fill"></div></div><div class="live-stats" id="live-stats" data-i18n="liveLoading">Loading live progress…</div><div class="live-updated" id="live-updated"></div></div>
+      <p class="token-prize" data-i18n="prize">🏆 Prize pool: the creator fee (70% of the 1% curve fee) accrues from every curve trade and funds future prizes.</p>
+      <div class="token-ca"><div class="l" data-i18n="caLabel">CONTRACT ADDRESS (BSC)</div><code>0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd</code><button class="ca-copy" id="ca-copy-btn" type="button" data-i18n="copy">Copy</button></div>
+      <a class="token-link" href="https://gang.fun/token/0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd" target="_blank" rel="noopener" data-i18n="tradeLink">Trade SPLAT on Gang.fun ↗</a>
+      <a class="token-link" href="https://bscscan.com/token/0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd" target="_blank" rel="noopener" data-i18n="bscLink">View contract on BscScan ↗</a>
+      <div class="how-to-buy" data-i18n-html="howToBuy"><b>How to buy:</b> curve trades are open only to Binance Agentic Wallets holding a .ai Agent ID — max 1% of supply per wallet. After graduation, SPLAT trades on PancakeSwap for everyone.</div>
+      <p class="token-note" data-i18n="tokenNote">Always verify the contract address above before trading. In-game SPLAT points are game points, not tokens.</p>
+      <a class="agents-link" href="https://github.com/Goatleaf12/x-arena/blob/main/skill.md" target="_blank" rel="noopener" data-i18n="agentsLink">🤖 For AI agents: join the lobby without a browser — read the agent skill ↗</a>
     </div>
     <p class="site-footer">SPLAT — Play. Win. SPLAT.</p>
   </section>
@@ -297,22 +315,61 @@
 
 <!-- END SCREEN -->
 <div id="end-screen" class="screen hidden">
-  <div class="logo-badge"><span class="x">X</span> MATCH OVER</div>
+  <div class="logo-badge"><span class="x">X</span> <span data-i18n="matchOver">MATCH OVER</span></div>
   <h1 class="title" id="end-title">TIME'S UP!</h1>
   <p class="subtitle" id="end-subtitle"></p>
   <div id="end-stats"></div>
-  <div id="leaderboard"><h3>LOCAL LEADERBOARD — TOP 5</h3><ol id="lb-list"></ol></div>
+  <div id="leaderboard"><h3 data-i18n="lbTitle">LOCAL LEADERBOARD — TOP 5</h3><ol id="lb-list"></ol></div>
   <div id="chain-submit">
-    <h3>ON-CHAIN LEADERBOARD — X LAYER TESTNET</h3>
-    <p id="chain-status">Submit this score to the on-chain top 10 (testnet — no real funds). Needs a wallet; the game works fully without one.</p>
-    <button id="submit-score-btn" class="big-btn secondary">Submit score on-chain</button>
+    <h3 data-i18n="chainTitle">ON-CHAIN LEADERBOARD — X LAYER TESTNET</h3>
+    <p id="chain-status" data-i18n="chainStatus">Submit this score to the on-chain top 10 (testnet — no real funds). Needs a wallet; the game works fully without one.</p>
+    <button id="submit-score-btn" class="big-btn secondary" data-i18n="submitBtn">Submit score on-chain</button>
     <p class="footnote">Contract 0xBE23…4ac0 · X Layer testnet (chain 1952)</p>
   </div>
-  <button id="again-btn" class="big-btn">PLAY AGAIN</button>
-  <button id="change-char-btn" class="big-btn secondary">Change character</button>
+  <button id="again-btn" class="big-btn" data-i18n="againBtn">PLAY AGAIN</button>
+  <button id="change-char-btn" class="big-btn secondary" data-i18n="changeCharBtn">Change character</button>
 </div>
 
 <div id="errlog"></div>
 <script type="module" src="./src/main.js"></script>
+<script>
+(function(){
+  var CA='0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd';
+  var fill=document.getElementById('live-fill'), stats=document.getElementById('live-stats'),
+      upd=document.getElementById('live-updated');
+  if(!fill||!stats) return;
+  // Language-aware strings (mirrors src/i18n.js; this classic script runs
+  // before the module, so it reads localStorage directly).
+  function zh(){ try{ return localStorage.getItem('splat-lang')==='zh'; }catch(e){ return false; } }
+  function fmt(n,d){ return Number(n).toFixed(d==null?2:d); }
+  async function refresh(){
+    try{
+      var r=await fetch('https://gang.fun/api/market?sort=new&kind=v3&limit=100&offset=0');
+      if(!r.ok) throw new Error('http '+r.status);
+      var j=await r.json();
+      var it=(j.items||[]).find(function(x){ return (x.address||'').toLowerCase()===CA; });
+      if(!it) return; // not on this page yet — keep previous values, retry next cycle
+      var pct=Number(it.progressPct||0);
+      var raised=pct/100*6;
+      fill.style.width=Math.min(100,pct)+'%';
+      if(it.graduated){
+        stats.innerHTML= zh() ? '<b>已毕业！</b>现可在 PancakeSwap 交易。' : '<b>Graduated!</b> Now trading on PancakeSwap.';
+      }else{
+        var price=Number(it.priceBnb||0);
+        if(zh()){
+          stats.innerHTML='<b>'+fmt(raised)+'</b> BNB 已筹集（共 6 BNB）&nbsp;·&nbsp; <b>'+fmt(pct,1)+'%</b> &nbsp;·&nbsp; <b>'+(it.trades||0)+'</b> 笔交易 &nbsp;·&nbsp; 价格 <b>'+price.toExponential(2)+'</b> BNB';
+        }else{
+          stats.innerHTML='<b>'+fmt(raised)+'</b> BNB raised of 6 BNB &nbsp;·&nbsp; <b>'+fmt(pct,1)+'%</b> &nbsp;·&nbsp; <b>'+(it.trades||0)+'</b> trades &nbsp;·&nbsp; price <b>'+price.toExponential(2)+'</b> BNB';
+        }
+      }
+      var t=new Date();
+      var hh=String(t.getHours()).padStart(2,'0'), mm=String(t.getMinutes()).padStart(2,'0');
+      upd.textContent= zh() ? '数据来自 Gang.fun · 更新于 '+hh+':'+mm : 'Live from Gang.fun · updated '+hh+':'+mm;
+    }catch(e){ /* keep last values; retry next cycle */ }
+  }
+  window.__refreshLiveProgress = refresh;
+  refresh(); setInterval(refresh,60000);
+})();
+</script>
 </body>
 </html>

@@ -2,6 +2,7 @@
 // 2026-11-14: join on PLAY, occupants render in the arena with name tags,
 // chat panel docks in the HUD. Live server:
 // https://splat-lobby.oagenthq.workers.dev
+import { t } from './i18n.js'
 //
 // The lobby is a mini-Roblox: one shared room where the four chibi
 // characters (Momo / Bibo / Kiko / Pipi) gather, move around, and talk.
@@ -204,7 +205,7 @@ export function createChatPanel(container, client, { maxMessages = 100 } = {}) {
   head.className = "lobby-chat-head";
   const title = document.createElement("span");
   title.className = "lobby-chat-title";
-  title.textContent = "💬 Lobby chat";
+  title.textContent = t('chatTitle')
   const badge = document.createElement("span");
   badge.className = "lobby-chat-badge hidden";
   badge.textContent = "0";
@@ -220,12 +221,12 @@ export function createChatPanel(container, client, { maxMessages = 100 } = {}) {
   const input = document.createElement("input");
   input.className = "lobby-chat-input";
   input.maxLength = 280;
-  input.placeholder = "Say something to the room…";
+  input.placeholder = t('chatPh')
   input.setAttribute("aria-label", "Chat message");
   const send = document.createElement("button");
   send.className = "lobby-chat-send";
   send.type = "submit";
-  send.textContent = "Send";
+  send.textContent = t('chatSend')
   form.append(input, send);
   container.append(head, feed, form);
 

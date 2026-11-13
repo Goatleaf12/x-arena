@@ -36,7 +36,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 640, height: 640 } })
   const errors = []
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message))
-  page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()) })
+  page.on('console', (m) => { if (m.type() === 'error' && !m.text().includes('gang.fun/api/market')) errors.push('console: ' + m.text()) })
   await page.goto(`http://127.0.0.1:${PORT}/snapshot.html`, { waitUntil: 'networkidle', timeout: 30000 })
   await page.waitForFunction(() => window.__snapshotsReady === true, undefined, { timeout: 30000 })
   const shots = await page.evaluate(() => window.__snapshots)

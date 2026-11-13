@@ -1,6 +1,7 @@
 import { Game } from './game.js'
 import { CHARACTERS } from './characters.js'
 import { LobbyClient, createChatPanel, occupantDisplay } from './lobby.js'
+import { t, currentLang, setLang, applyStaticI18n } from './i18n.js'
 
 // ---- SPLAT lobby (live): https://splat-lobby.oagenthq.workers.dev ----
 // One shared hangout room (Cloudflare Worker + Durable Object, free tier).
@@ -41,7 +42,7 @@ async function joinLobby(charId) {
         game.setLobbyOccupants(others)
         if (countEl) {
           const n = (state.occupants ?? []).length
-          countEl.textContent = n > 1 ? `👥 ${n} in lobby` : '👥 lobby: just you'
+          countEl.textContent = n > 1 ? t('lobbyIn', { n }) : t('lobbySolo')
         }
       },
       onError: (err) => console.warn('lobby:', err?.message || err),
@@ -62,7 +63,7 @@ async function joinLobby(charId) {
     }, 200)
   } catch (err) {
     console.warn('lobby join failed (playing solo):', err?.message || err)
-    if (countEl) countEl.textContent = '👥 lobby offline — solo'
+    if (countEl) countEl.textContent = t('lobbyOffline')
   }
 }
 
@@ -134,32 +135,60 @@ const ui = {
 const game = new Game(canvas, ui)
 window.__game = game // for automated testing
 
-// ---- character select cards ----
+// ---- character select cards (re-rendered on language switch) ----
 let selected = CHARACTERS[0].id
 const cardsEl = $('char-cards')
 function hexCss(n) { return '#' + n.toString(16).padStart(6, '0') }
 
-CHARACTERS.forEach((c) => {
-  const card = document.createElement('div')
-  card.className = 'char-card' + (c.id === selected ? ' selected' : '')
-  card.dataset.id = c.id
-  card.innerHTML = `
+function renderCharCards() {
+  const zh = currentLang() === 'zh'
+  cardsEl.innerHTML = ''
+  CHARACTERS.forEach((c) => {
+    const card = document.createElement('div')
+    card.className = 'char-card' + (c.id === selected ? ' selected' : '')
+    card.dataset.id = c.id
+    card.innerHTML = `
     <div class="char-portrait" style="background:radial-gradient(circle at 50% 42%, ${hexCss(c.color)}38, transparent 72%)">
-      <img class="char-img" src="./assets/char-${c.id}.png" alt="${c.name} the ${c.tag.toLowerCase()}" draggable="false" />
+      <img class="char-img" src="./assets/char-${c.id}.png" alt="${c.name} the ${(zh ? (c.tagZh || c.tag) : c.tag).toLowerCase()}" draggable="false" />
     </div>
     <h3>${c.name}</h3>
-    <p>${c.desc}</p>
-    <span class="tag">${c.tag}</span>`
-  card.addEventListener('click', () => {
-    selected = c.id
-    document.querySelectorAll('.char-card').forEach((el) => el.classList.toggle('selected', el.dataset.id === c.id))
-    game.showPreview(c.id)
-    game.sfx.ensure()
+    <p>${zh ? (c.descZh || c.desc) : c.desc}</p>
+    <span class="tag">${zh ? (c.tagZh || c.tag) : c.tag}</span>`
+    card.addEventListener('click', () => {
+      selected = c.id
+      document.querySelectorAll('.char-card').forEach((el) => el.classList.toggle('selected', el.dataset.id === c.id))
+      game.showPreview(c.id)
+      game.sfx.ensure()
+    })
+    cardsEl.appendChild(card)
   })
-  cardsEl.appendChild(card)
-})
+}
+renderCharCards()
 
 game.showPreview(selected)
+
+// ---- language toggle (EN / 中文) ----
+function applyLang() {
+  applyStaticI18n()
+  renderCharCards()
+  const btn = $('lang-toggle')
+  if (btn) btn.textContent = currentLang() === 'zh' ? '🌐 EN' : '🌐 中文'
+  if (window.__refreshLiveProgress) window.__refreshLiveProgress()
+}
+setLang(currentLang()) // restores saved choice + sets <html lang>
+applyLang()
+$('lang-toggle')?.addEventListener('click', () => {
+  setLang(currentLang() === 'zh' ? 'en' : 'zh')
+  applyLang()
+})
+
+// ---- contract address copy button ----
+$('ca-copy-btn')?.addEventListener('click', (e) => {
+  const btn = e.currentTarget
+  if (navigator.clipboard) navigator.clipboard.writeText('0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd')
+  btn.textContent = t('copied')
+  setTimeout(() => { btn.textContent = t('copy') }, 1500)
+})
 
 $('start-btn').addEventListener('click', () => {
   $('select-screen').classList.add('hidden')
@@ -205,8 +234,8 @@ ui.onEnd = (stats) => {
   // reset the on-chain submit button for the new match result
   const submitBtn = $('submit-score-btn')
   submitBtn.disabled = false
-  submitBtn.textContent = 'Submit score on-chain'
-  $('chain-status').textContent = 'Submit this score to the on-chain top 10 (testnet — no real funds). Needs a wallet; the game works fully without one.'
+  submitBtn.textContent = t('submitBtn')
+  $('chain-status').textContent = t('chainStatus')
   const list = loadLb()
   const entry = {
     name: CHARACTERS.find((c) => c.id === selected)?.name || 'Player',
@@ -217,18 +246,18 @@ ui.onEnd = (stats) => {
   saveLb(list)
   const rank = list.indexOf(entry) + 1
 
-  $('end-title').textContent = stats.score >= 300 ? 'ARENA CHAMPION!' : "TIME'S UP!"
+  $('end-title').textContent = stats.score >= 300 ? t('champ') : t('timesUp')
   $('end-subtitle').textContent = rank === 1
-    ? 'New local record! The arena is yours.'
-    : `You finished #${rank} on the local board. Splat more bots next time!`
+    ? t('newRecord')
+    : t('finishedRank', { rank })
   $('end-stats').innerHTML = `
-    <div class="stat-box"><div class="v">${stats.score}</div><div class="l">SCORE</div></div>
-    <div class="stat-box"><div class="v">${stats.kills}</div><div class="l">SPLATS</div></div>
-    <div class="stat-box"><div class="v">${stats.deaths}</div><div class="l">SPLATTED</div></div>
-    <div class="stat-box"><div class="v">${stats.splat}</div><div class="l">SPLAT</div></div>
-    <div class="stat-box"><div class="v">${stats.accuracy}%</div><div class="l">ACCURACY</div></div>`
+    <div class="stat-box"><div class="v">${stats.score}</div><div class="l">${t('statScore')}</div></div>
+    <div class="stat-box"><div class="v">${stats.kills}</div><div class="l">${t('statSplats')}</div></div>
+    <div class="stat-box"><div class="v">${stats.deaths}</div><div class="l">${t('statSplatted')}</div></div>
+    <div class="stat-box"><div class="v">${stats.splat}</div><div class="l">${t('statSplat')}</div></div>
+    <div class="stat-box"><div class="v">${stats.accuracy}%</div><div class="l">${t('statAcc')}</div></div>`
   $('lb-list').innerHTML = list.map((e, i) =>
-    `<li class="${e === entry ? 'me' : ''}"><span>#${i + 1} ${e.name} • ${e.date}</span><span>${e.score} pts • ${e.kills} splats</span></li>`
+    `<li class="${e === entry ? 'me' : ''}"><span>#${i + 1} ${e.name} • ${e.date}</span><span>${t('lbItem', { score: e.score, kills: e.kills })}</span></li>`
   ).join('')
   $('end-screen').classList.remove('hidden')
 }
@@ -253,9 +282,9 @@ const uint256Hex = (n) => BigInt(n).toString(16).padStart(64, '0')
 $('submit-score-btn').addEventListener('click', async () => {
   const status = $('chain-status')
   const btn = $('submit-score-btn')
-  if (!lastStats) { status.textContent = 'No match score to submit yet — play a match first.'; return }
+  if (!lastStats) { status.textContent = t('noScore'); return }
   if (!window.ethereum) {
-    status.textContent = 'No wallet detected in this browser. Install MetaMask (or another EVM wallet) to submit on-chain — your local score is already saved above.'
+    status.textContent = t('noWallet')
     return
   }
   btn.disabled = true
@@ -272,17 +301,17 @@ $('submit-score-btn').addEventListener('click', async () => {
         } else throw switchErr
       }
     }
-    status.textContent = 'Waiting for wallet confirmation… (testnet, no real funds)'
+    status.textContent = t('waitingWallet')
     const data = LB_SUBMIT_SELECTOR + uint256Hex(lastStats.score) + uint256Hex(lastStats.kills)
     const txHash = await window.ethereum.request({
       method: 'eth_sendTransaction',
       params: [{ from, to: LB_CONTRACT, data }]
     })
-    status.textContent = `Submitted on-chain! Tx ${txHash.slice(0, 18)}… — check it on the X Layer testnet explorer.`
-    btn.textContent = 'Score submitted ✓'
+    status.textContent = t('submitted', { tx: txHash.slice(0, 18) })
+    btn.textContent = t('submittedBtn')
   } catch (err) {
     console.warn('on-chain submit failed:', err)
-    status.textContent = 'Submit cancelled or failed (' + (err?.message || err).toString().slice(0, 120) + '). Your local score is still saved — try again anytime.'
+    status.textContent = t('submitFailed', { err: (err?.message || err).toString().slice(0, 120) })
     btn.disabled = false
   }
 })

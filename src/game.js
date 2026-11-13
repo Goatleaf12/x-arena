@@ -3,6 +3,7 @@ import { buildArena, ARENA_RADIUS } from './arena.js'
 import { createCharacter, animateCharacter, fireFlash, hitSquash, CHARACTERS } from './characters.js'
 import { makeCoinTexture } from './textures.js'
 import { Sfx } from './audio.js'
+import { t as tr } from './i18n.js'
 
 const MATCH_SECONDS = 120
 const PLAYER_SPEED = 6.5
@@ -216,7 +217,7 @@ export class Game {
     const knob = document.getElementById('joy-knob')
     const fireBtn = document.getElementById('fire-btn')
     const hint = document.getElementById('hint-bar')
-    if (hint) hint.textContent = 'Left stick move • Drag screen to look • 🔥 to splat'
+    if (hint) hint.textContent = tr('touchHint')
     if (!joy || !knob || !fireBtn) return
     const R = 52 // joystick travel radius, px
     let joyId = null
@@ -461,7 +462,7 @@ export class Game {
   pause() {
     if (this.state !== 'playing') return
     this.state = 'paused'
-    this.ui.centerMsg.textContent = 'PAUSED — click to resume'
+    this.ui.centerMsg.textContent = tr('paused')
   }
 
   resume() {
@@ -578,7 +579,7 @@ export class Game {
     this.stats.score += 100
     this._burst(bot.pos.clone().add(new THREE.Vector3(0, 1, 0)), bot.char.def.color, 22, 5, 4)
     this._burst(bot.pos.clone().add(new THREE.Vector3(0, 1, 0)), 0xffffff, 10, 3, 3)
-    this.ui.addKillfeed(`You splatted ${bot.char.def.name}!  +100`)
+    this.ui.addKillfeed(tr('youSplatted', { name: bot.char.def.name }))
     this.sfx.splat()
     this._updateHud()
   }
@@ -595,7 +596,7 @@ export class Game {
       this.player.char.group.visible = false
       this.stats.deaths++
       this._burst(this.player.pos.clone().add(new THREE.Vector3(0, 1, 0)), this.player.char.def.color, 22, 5, 4)
-      this.ui.setCenter("SPLATTED!", 1400)
+      this.ui.setCenter(tr('splatted'), 1400)
       this.sfx.splat()
       this._updateHud()
     }
@@ -688,7 +689,7 @@ export class Game {
           this.ui.setCenter(String(3 - step), 0)
           this.sfx.count()
         } else if (step === 3) {
-          this.ui.setCenter('GO!', 700)
+          this.ui.setCenter(tr('go'), 700)
           this.sfx.go()
           this.state = 'playing'
           this.ui.centerMsg.textContent = ''
@@ -973,7 +974,7 @@ export class Game {
           this.stats.score += 25
           this.player.hp = Math.min(100, this.player.hp + 20)
           this._burst(coin.mesh.position, 0xf5b301, 14, 3, 3)
-          this.ui.addKillfeed('SPLAT collected!  +25  •  +20 HP')
+          this.ui.addKillfeed(tr('splatCollected'))
           this.sfx.coin()
           this._updateHud()
         }
@@ -1007,7 +1008,7 @@ export class Game {
     const ss = Math.floor(this.timeLeft % 60).toString().padStart(2, '0')
     const vals = {
       score: String(this.stats.score),
-      kills: `${this.stats.kills} splats • ${this.stats.splat} SPLAT`,
+      kills: tr('hudKills', { kills: this.stats.kills, splat: this.stats.splat }),
       splat: String(this.stats.splat),
       timer: `${mm}:${ss}`,
       hp: Math.max(0, Math.round(this.player ? this.player.hp : 100))
@@ -1022,7 +1023,7 @@ export class Game {
     if (force || vals.hp !== this.lastHud.hp) {
       u.healthFill.style.width = `${vals.hp}%`
       u.healthFill.classList.toggle('hurt', vals.hp <= 35)
-      u.healthText.textContent = `HEALTH ${vals.hp}`
+      u.healthText.textContent = tr('hudHealth', { hp: vals.hp })
     }
     this.lastHud = vals
   }

@@ -39,9 +39,25 @@ try {
   })
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } })
   const errors = []
-  page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()) })
+  let gangReqFails = 0
+  let failedResourceLogs = 0
+  // "Failed to load resource" console lines carry no URL, so they are
+  // reconciled by count against gang.fun request failures (1:1). Any
+  // surplus means a real asset failed to load.
+  page.on('console', (m) => {
+    if (m.type() !== 'error') return
+    if (m.text().startsWith('Failed to load resource')) { failedResourceLogs++; return }
+    errors.push('console: ' + m.text())
+  })
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message))
-  page.on('requestfailed', (r) => errors.push('reqfail: ' + r.url()))
+  // Live curve feed (gang.fun) fails in this VM's Chromium: the egress
+  // proxy closes its CONNECT tunnel (ERR_TUNNEL_CONNECTION_FAILED), while
+  // curl + real browsers reach it fine (CORS *, verified 2026-11-14).
+  // The page handles the failure gracefully, so ignore it here.
+  page.on('requestfailed', (r) => {
+    if (r.url().startsWith('https://gang.fun/api/market')) { gangReqFails++; return }
+    errors.push('reqfail: ' + r.url())
+  })
 
   // --- 1. select screen ---
   await page.goto(`${ORIGIN}/?demo=select`, { waitUntil: 'networkidle', timeout: 30000 })
@@ -61,8 +77,11 @@ try {
   // --- 2. start a match via demo mode ---
   await page.goto(`${ORIGIN}/?demo=1&char=momo`, { waitUntil: 'networkidle', timeout: 30000 })
   // countdown advances in game-time (dt clamped); under SwiftShader frames are
-  // slow, so wait for the state instead of a fixed sleep
-  await page.waitForFunction(() => window.__game.state === 'playing', undefined, { timeout: 90000 })
+  // slow, so wait for the state instead of a fixed sleep.
+  // NOTE: game-time runs at ~0.03 s per real second in this VM's software
+  // renderer, so the 2.1 s countdown alone needs ~70 s real — keep this
+  // timeout generous (verified 2026-11-14: the 90 s timeout flaked twice).
+  await page.waitForFunction(() => window.__game.state === 'playing', undefined, { timeout: 240000 })
   await sleep(1000)
   const mid = await page.evaluate(() => {
     const g = window.__game
@@ -130,7 +149,7 @@ try {
 
   // --- 6. end screen (force timer) ---
   await page.evaluate(() => { const g = window.__game; g.timeLeft = 0.5 })
-  await page.waitForFunction(() => window.__game.state === 'ended', undefined, { timeout: 90000 })
+  await page.waitForFunction(() => window.__game.state === 'ended', undefined, { timeout: 240000 }) // generous: same slow game-time rate as the countdown wait above
   await sleep(1000)
   const end = await page.evaluate(() => ({
     state: window.__game.state,
@@ -144,6 +163,7 @@ try {
   if (end.lbItems < 1) fail('leaderboard empty')
   await page.screenshot({ timeout: 120000, path: `${SHOTS}/06-end.png` })
 
+  if (failedResourceLogs > gangReqFails) errors.push(`console: ${failedResourceLogs - gangReqFails} unexplained "Failed to load resource" error(s)`)
   if (errors.length) { console.log('PAGE ERRORS:'); errors.forEach((e) => console.log(' -', e.slice(0, 300))); failures += errors.length }
 } catch (e) {
   console.log('TEST CRASH:', e.message)

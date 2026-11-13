@@ -52,8 +52,22 @@ try {
   // --- 2. mobile: touch class + controls visible on select screen ---
   const mob = await browser.newPage({ viewport: { width: 720, height: 1280 }, isMobile: true, hasTouch: true })
   const errors = []
-  mob.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()) })
+  let gangReqFails = 0
+  let failedResourceLogs = 0
+  // "Failed to load resource" console lines carry no URL; reconcile by
+  // count against gang.fun request failures (1:1). Any surplus is real.
+  mob.on('console', (m) => {
+    if (m.type() !== 'error') return
+    if (m.text().startsWith('Failed to load resource')) { failedResourceLogs++; return }
+    errors.push('console: ' + m.text())
+  })
   mob.on('pageerror', (e) => errors.push('pageerror: ' + e.message))
+  // gang.fun live feed fails in this VM's Chromium (egress proxy); the
+  // page degrades gracefully, real browsers reach it (CORS *).
+  mob.on('requestfailed', (r) => {
+    if (r.url().startsWith('https://gang.fun/api/market')) { gangReqFails++; return }
+    errors.push('reqfail: ' + r.url())
+  })
   await mob.goto(`${ORIGIN}/?demo=select`, { waitUntil: 'networkidle', timeout: 30000 })
   await sleep(3000)
   const m = await mob.evaluate(() => {
@@ -74,7 +88,9 @@ try {
 
   // --- 3. start a match, drag the joystick up, player must move ---
   await mob.goto(`${ORIGIN}/?demo=1&char=momo`, { waitUntil: 'networkidle', timeout: 30000 })
-  await mob.waitForFunction(() => window.__game.state === 'playing', undefined, { timeout: 90000 })
+  // generous timeout: game-time runs at ~0.03 s per real second under this
+  // VM's SwiftShader, so the 2.1 s countdown alone needs ~70 s real.
+  await mob.waitForFunction(() => window.__game.state === 'playing', undefined, { timeout: 240000 })
   await sleep(800)
   const layout = await mob.evaluate(() => {
     const joy = document.getElementById('joy-base').getBoundingClientRect()
@@ -143,6 +159,7 @@ try {
   else ok('drag-to-look turns the camera')
   await mob.screenshot({ path: `${SHOTS}/09-mobile-playing.png`, timeout: 60000 })
 
+  if (failedResourceLogs > gangReqFails) errors.push(`console: ${failedResourceLogs - gangReqFails} unexplained "Failed to load resource" error(s)`)
   if (errors.length) { console.log('PAGE ERRORS:'); errors.forEach((e) => console.log(' -', e.slice(0, 300))); failures += errors.length }
 } catch (e) {
   console.log('TEST CRASH:', e.message)
