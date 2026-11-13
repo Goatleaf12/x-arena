@@ -110,6 +110,12 @@ function saveLb(list) {
 }
 
 ui.onEnd = (stats) => {
+  lastStats = stats
+  // reset the on-chain submit button for the new match result
+  const submitBtn = $('submit-score-btn')
+  submitBtn.disabled = false
+  submitBtn.textContent = 'Submit score on-chain'
+  $('chain-status').textContent = 'Submit this score to the on-chain top 10 (testnet — no real funds). Needs a wallet; the game works fully without one.'
   const list = loadLb()
   const entry = {
     name: CHARACTERS.find((c) => c.id === selected)?.name || 'Player',
@@ -135,6 +141,60 @@ ui.onEnd = (stats) => {
   ).join('')
   $('end-screen').classList.remove('hidden')
 }
+
+// ---- on-chain leaderboard (X Layer testnet 1952, wallet-optional) ----
+// Contract: XArenaLeaderboard 0xBE230D902B60216251ccDfC70bCE80b073754ac0
+// (address + full ABI in contracts/XArenaLeaderboard.json).
+// The game never auto-connects: this only runs when the player clicks
+// "Submit score on-chain", and the game is fully playable without a wallet.
+const LB_CONTRACT = '0xBE230D902B60216251ccDfC70bCE80b073754ac0'
+const LB_SUBMIT_SELECTOR = '0x8358ba08' // submitScore(uint256,uint256)
+const XLAYER_TESTNET = {
+  chainId: '0x7a0', // 1952
+  chainName: 'X Layer Testnet',
+  nativeCurrency: { name: 'OKB', symbol: 'OKB', decimals: 18 },
+  rpcUrls: ['https://xlayer-testnet.drpc.org'],
+  blockExplorerUrls: ['https://www.okx.com/explorer/xlayer-test']
+}
+let lastStats = null
+const uint256Hex = (n) => BigInt(n).toString(16).padStart(64, '0')
+
+$('submit-score-btn').addEventListener('click', async () => {
+  const status = $('chain-status')
+  const btn = $('submit-score-btn')
+  if (!lastStats) { status.textContent = 'No match score to submit yet — play a match first.'; return }
+  if (!window.ethereum) {
+    status.textContent = 'No wallet detected in this browser. Install MetaMask (or another EVM wallet) to submit on-chain — your local score is already saved above.'
+    return
+  }
+  btn.disabled = true
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+    const from = accounts[0]
+    const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+    if (chainId !== XLAYER_TESTNET.chainId) {
+      try {
+        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: XLAYER_TESTNET.chainId }] })
+      } catch (switchErr) {
+        if (switchErr?.code === 4902) {
+          await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [XLAYER_TESTNET] })
+        } else throw switchErr
+      }
+    }
+    status.textContent = 'Waiting for wallet confirmation… (testnet, no real funds)'
+    const data = LB_SUBMIT_SELECTOR + uint256Hex(lastStats.score) + uint256Hex(lastStats.kills)
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{ from, to: LB_CONTRACT, data }]
+    })
+    status.textContent = `Submitted on-chain! Tx ${txHash.slice(0, 18)}… — check it on the X Layer testnet explorer.`
+    btn.textContent = 'Score submitted ✓'
+  } catch (err) {
+    console.warn('on-chain submit failed:', err)
+    status.textContent = 'Submit cancelled or failed (' + (err?.message || err).toString().slice(0, 120) + '). Your local score is still saved — try again anytime.'
+    btn.disabled = false
+  }
+})
 
 // ---- demo / test mode: ?demo=1 auto-starts a match (used by automated tests) ----
 const params = new URLSearchParams(location.search)

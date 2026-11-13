@@ -1,5 +1,7 @@
 node_modules/
 dist/
+contracts/out/
+contracts/cache/
 .DS_Store
 *.log
 shots/

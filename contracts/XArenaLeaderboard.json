@@ -1,0 +1,195 @@
+{
+  "name": "XArenaLeaderboard",
+  "network": "X Layer testnet",
+  "chainId": 1952,
+  "address": "0xBE230D902B60216251ccDfC70bCE80b073754ac0",
+  "deployTx": "0x7f75f168ff873d83c5936eab0dd8b1207c0ef6cea73887fbea10390ca37e7d57",
+  "deployBlock": 46117686,
+  "deployer": "0xB22B804e7Dbd9eC8f64484FB30a729ca8759D0E5",
+  "smokeTestTx": "0x88576e159eff182cf7bdb8f0cc6c0e3028125f3875fd1baec231346354c6a123",
+  "smokeTest": "submitScore(100, 3) from deployer, block 46117688 \u2014 first on-chain entry",
+  "abi": [
+    {
+      "type": "function",
+      "name": "bestKills",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "bestScore",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getPlayer",
+      "inputs": [
+        {
+          "name": "player",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "score",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "kills",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getTop10",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "entries",
+          "type": "tuple[10]",
+          "internalType": "struct XArenaLeaderboard.Entry[10]",
+          "components": [
+            {
+              "name": "player",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "score",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "kills",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "timestamp",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        },
+        {
+          "name": "count",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "submitScore",
+      "inputs": [
+        {
+          "name": "score",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "kills",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "topCount",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "totalSubmissions",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "event",
+      "name": "ScoreSubmitted",
+      "inputs": [
+        {
+          "name": "player",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "score",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "kills",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    }
+  ],
+  "selectors": {
+    "submitScore(uint256,uint256)": "0x8358ba08",
+    "getTop10()": "0x84837ee1",
+    "getPlayer(address)": "0x5c12cd4b"
+  }
+}

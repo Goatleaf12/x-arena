@@ -123,6 +123,11 @@
     padding:5px 2px;border-bottom:1px solid rgba(255,255,255,.07)}
   #leaderboard li:last-child{border-bottom:none}
   #leaderboard li.me{color:var(--gold)}
+  #chain-submit{margin-top:14px;background:var(--panel2);border:1px solid rgba(255,255,255,.14);
+    border-radius:16px;padding:14px 20px;min-width:min(420px,88vw);text-align:center}
+  #chain-submit h3{font-size:13px;letter-spacing:.16em;color:#9db4ff;margin-bottom:8px}
+  #chain-status{font-size:13px;font-weight:600;color:#e6ebff;line-height:1.6;margin-bottom:12px}
+  #chain-submit .footnote{margin-top:12px}
   #errlog{display:none}
 </style>
 </head>
@@ -179,6 +184,12 @@
   <p class="subtitle" id="end-subtitle"></p>
   <div id="end-stats"></div>
   <div id="leaderboard"><h3>LOCAL LEADERBOARD — TOP 5</h3><ol id="lb-list"></ol></div>
+  <div id="chain-submit">
+    <h3>ON-CHAIN LEADERBOARD — X LAYER TESTNET</h3>
+    <p id="chain-status">Submit this score to the on-chain top 10 (testnet — no real funds). Needs a wallet; the game works fully without one.</p>
+    <button id="submit-score-btn" class="big-btn secondary">Submit score on-chain</button>
+    <p class="footnote">Contract 0xBE23…4ac0 · X Layer testnet (chain 1952)</p>
+  </div>
   <button id="again-btn" class="big-btn">PLAY AGAIN</button>
   <button id="change-char-btn" class="big-btn secondary">Change character</button>
 </div>
