@@ -31,6 +31,11 @@ export class Game {
     this.touchMove = { x: 0, y: 0 } // virtual joystick vector, -1..1 (y: down positive)
     this._touchFiring = false
     this._lookTouch = null
+    // Touch devices never use pointer lock: on Android Chrome a touch
+    // exits pointer lock, and the pointerlockchange handler below would
+    // pause the game on nearly every touch (Hans's video 2026-11-14:
+    // game stuck on "PAUSED — click to resume", joystick dead).
+    this._isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0
     this.camYaw = 0
     this.camPitch = 0.32
     this.fireCd = 0
@@ -187,6 +192,7 @@ export class Game {
       }
     })
     document.addEventListener('pointerlockchange', () => {
+      if (this._isTouch) return // touch devices never lock the pointer
       if (document.pointerLockElement !== this.canvas && this.state === 'playing') {
         this.pause()
       }
@@ -200,8 +206,7 @@ export class Game {
   // ================= touch controls (virtual joystick + fire button) =================
   // Shown only on touch devices (html.touch); desktop keeps keyboard + mouse.
   _bindTouch() {
-    const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0
-    if (!isTouch) return
+    if (!this._isTouch) return
     document.documentElement.classList.add('touch')
     const joy = document.getElementById('joy-base')
     const knob = document.getElementById('joy-knob')
@@ -213,6 +218,7 @@ export class Game {
     let joyId = null
     const setKnob = (dx, dy) => { knob.style.transform = `translate(${dx}px, ${dy}px)` }
     joy.addEventListener('pointerdown', (e) => {
+      if (this.state === 'paused') this.resume() // forgiving: stick wakes the game
       if (this.state !== 'playing') return
       joyId = e.pointerId
       try { joy.setPointerCapture(e.pointerId) } catch { /* ignore */ }
@@ -240,6 +246,7 @@ export class Game {
     joy.addEventListener('pointercancel', joyEnd)
     fireBtn.addEventListener('pointerdown', (e) => {
       e.preventDefault()
+      if (this.state === 'paused') this.resume() // forgiving: fire wakes the game
       if (this.state !== 'playing') return
       this._touchFiring = true
       this._tryFire()
@@ -284,8 +291,10 @@ export class Game {
   }
 
   // Pointer lock can reject without a user gesture (e.g. demo auto-start) —
-  // never let that throw an unhandled rejection.
+  // never let that throw an unhandled rejection. Touch devices skip it
+  // entirely (see _isTouch note in the constructor).
   _lockPointer() {
+    if (this._isTouch) return
     try {
       const p = this.canvas.requestPointerLock?.()
       if (p && typeof p.catch === 'function') p.catch(() => {})
