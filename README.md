@@ -1,6 +1,6 @@
 # X Arena — the SPLAT game
 
-**Live demo:** https://x-arena.pages.dev/
+**Live demo:** https://splat-arena.pages.dev/
 **GitHub:** https://github.com/Goatleaf12/x-arena
 
 A cute cartoon 3D arena shooter in the browser — pick your fighter, splat the bots,

@@ -17,7 +17,7 @@ const errs = []
 page.on('pageerror', (e) => errs.push('pageerror: ' + e.message))
 page.on('console', (m) => { if (m.type() === 'error') errs.push('console: ' + m.text()) })
 page.on('requestfailed', (r) => errs.push('reqfail: ' + r.url()))
-await page.goto('https://x-arena.pages.dev/?demo=select', { waitUntil: 'networkidle', timeout: 60000 })
+await page.goto('https://splat-arena.pages.dev/?demo=select', { waitUntil: 'networkidle', timeout: 60000 })
 await new Promise((r) => setTimeout(r, 4000))
 const boot = await page.evaluate(() => ({
   game: !!window.__game,
