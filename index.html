@@ -175,7 +175,7 @@
   .token-logo{width:84px;height:84px;border-radius:50%;box-shadow:0 10px 26px rgba(0,0,0,.5)}
   .token-card h2{font-size:24px;font-weight:900;letter-spacing:.02em;margin:12px 0 8px}
   .token-status{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:800;
-    color:#ffe9a8;background:rgba(245,179,1,.14);border:1px solid rgba(245,179,1,.4);
+    color:#a7f3d0;background:rgba(52,211,153,.14);border:1px solid rgba(52,211,153,.45);
     padding:6px 14px;border-radius:999px}
   .status-dot{width:9px;height:9px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399}
   .token-blurb{font-size:14px;color:#dbe4ff;line-height:1.55;margin:14px auto 0;max-width:520px}
@@ -188,6 +188,10 @@
   .token-link{display:inline-block;margin-top:14px;font-size:15px;font-weight:800;color:#1a1200;
     background:linear-gradient(90deg,#f5b301,#ff8a3d);padding:11px 28px;border-radius:999px;text-decoration:none}
   .token-note{font-size:12px;color:#93a1c9;line-height:1.6;margin-top:14px}
+  .token-ca{margin-top:16px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:12px 14px}
+  .token-ca .l{font-size:10.5px;letter-spacing:.14em;color:#9db4ff;font-weight:700}
+  .token-ca code{display:block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:#ffe9a8;word-break:break-all;margin:6px 0 8px}
+  .ca-copy{font-size:12px;font-weight:800;color:#1a1200;background:linear-gradient(90deg,#f5b301,#ff8a3d);border:0;border-radius:999px;padding:6px 16px;cursor:pointer}
   .site-footer{margin:26px 0 10px;font-size:14px;font-weight:800;letter-spacing:.14em;color:#cdd8ff;text-align:center}
   /* end screen */
   #end-stats{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:20px 0 6px}
@@ -249,7 +253,7 @@
   <div class="logo-badge"><img src="./assets/splat-logo.png" alt="SPLAT logo" /> SPLAT</div>
   <h1 class="title"><span class="x">X</span> <span class="arena">ARENA</span></h1>
   <p class="subtitle">A cute paintball arena shooter. Pick your fighter, splat the bots,
-    and grab <b>SPLAT points</b> — the home of the <b>SPLAT</b> token, launching soon on Gang.fun.</p>
+    and grab <b>SPLAT points</b> — the home of the <b>SPLAT</b> token, live now on Gang.fun.</p>
   <div id="char-cards"></div>
   <div class="name-row">
     <label for="player-name">Your lobby name</label>
@@ -270,20 +274,22 @@
     <div class="token-card">
       <img class="token-logo" src="./assets/splat-logo.png" alt="SPLAT logo" />
       <h2>SPLAT — THE TOKEN</h2>
-      <p class="token-status"><span class="status-dot"></span> Launching soon on Gang.fun</p>
+      <p class="token-status"><span class="status-dot"></span> LIVE on Gang.fun — trading now</p>
       <p class="token-blurb">SPLAT is the token of this arena — a Gang.fun V3 bonding-curve token on BNB Chain.
-        Play the game now; the token launches soon.</p>
+        The token is live on the curve; it graduates to PancakeSwap at 6 BNB raised.</p>
       <div class="token-stats">
         <div class="token-stat"><div class="v">1,000,000,000</div><div class="l">TOTAL SUPPLY</div></div>
         <div class="token-stat"><div class="v">800M / 200M</div><div class="l">CURVE / POOL</div></div>
         <div class="token-stat"><div class="v">2%</div><div class="l">POOL TAX (BUY / SELL)</div></div>
-        <div class="token-stat"><div class="v">0%</div><div class="l">DIVIDEND (PLANNED)</div></div>
+        <div class="token-stat"><div class="v">0%</div><div class="l">DIVIDEND</div></div>
         <div class="token-stat"><div class="v">6 BNB</div><div class="l">GRADUATION TARGET</div></div>
         <div class="token-stat"><div class="v">70% of 1%</div><div class="l">CREATOR FEE → PRIZE POOL</div></div>
       </div>
-      <p class="token-prize">🏆 Prize pool: <b>0 SPLAT</b> — the pool starts when the token launches. Trading fees will fund future prizes.</p>
-      <a class="token-link" href="https://gang.fun/" target="_blank" rel="noopener">Visit Gang.fun ↗</a>
-      <p class="token-note">No contract address yet — the SPLAT token has not launched. In-game SPLAT points are game points, not tokens. No price, no holders, no market stats until launch.</p>
+      <p class="token-prize">🏆 Prize pool: the creator fee (70% of the 1% curve fee) accrues from every curve trade and funds future prizes.</p>
+      <div class="token-ca"><div class="l">CONTRACT ADDRESS (BSC)</div><code>0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd</code><button class="ca-copy" type="button" onclick="navigator.clipboard &amp;&amp; navigator.clipboard.writeText('0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd'); this.textContent='Copied ✓'; setTimeout(()=>this.textContent='Copy',1500)">Copy</button></div>
+      <a class="token-link" href="https://gang.fun/token/0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd" target="_blank" rel="noopener">Trade SPLAT on Gang.fun ↗</a>
+      <a class="token-link" href="https://bscscan.com/token/0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd" target="_blank" rel="noopener">View contract on BscScan ↗</a>
+      <p class="token-note">Always verify the contract address above before trading. In-game SPLAT points are game points, not tokens.</p>
     </div>
     <p class="site-footer">SPLAT — Play. Win. SPLAT.</p>
   </section>

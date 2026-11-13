@@ -4,8 +4,11 @@
 **GitHub:** https://github.com/Goatleaf12/x-arena
 
 A cute cartoon 3D arena shooter in the browser — pick your fighter, splat the bots,
-and collect SPLAT points. This is the home of the **SPLAT** token, launching soon
+and collect SPLAT points. This is the home of the **SPLAT** token, live now
 on Gang.fun (BNB Chain, V3 bonding curve, Agent ID gated).
+
+Contract address (BSC): `0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd`
+Token page: https://gang.fun/token/0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd
 
 100% original characters, code and art. No profile photos, no sign-in, no wallet needed to play.
 
@@ -57,15 +60,15 @@ npm run preview # serves dist/ on http://localhost:4173
 - All textures are generated on canvas at runtime; all models are built from primitives
 - Static site only — no server, no backend
 
-## SPLAT token (launching soon)
+## SPLAT token (live)
 
-SPLAT launches on **Gang.fun** (BNB Chain) as a V3 bonding-curve token — Agent ID gated
-on the curve, graduating into PancakeSwap V2. **The token has not been created yet:
-no contract address, no price, no market stats.**
+SPLAT launched on **Gang.fun** (BNB Chain) 2026-11-14 as a V3 bonding-curve token — Agent ID gated
+on the curve, graduating into PancakeSwap V2 at 6 BNB raised. Contract: `0x62cb916909b785635fd7f8d1d6d8a5dc72e1abcd`
+(launch tx `0xfef267fe79521324a387029b889cb87e7bc867d2d0b267723df7bff9ef131617`, block 133401134).
 
 - Total supply: 1,000,000,000 (800M on the curve, 200M for the pool)
 - Pool tax after graduation: 2% buy / sell (platform keeps 0.5% of volume)
-- Dividend: 0% (planned) — the rest of the pool tax goes to the creator
+- Dividend: 0% — the rest of the pool tax goes to the creator
 - Graduation target: 6 BNB (needs 80+ wallets at the 1% per-wallet cap)
 - Creator fee: 70% of the 1% curve fee goes to the creator and funds the in-game prize pool
 
