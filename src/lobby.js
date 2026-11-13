@@ -1,15 +1,7 @@
-// lobby.js — SPLAT lobby client (Phase 1). NEW file, NOT wired in yet.
-//
-// INTEGRATION NOTE (for after the rebrand lands — do NOT import this
-// from main.js until then):
-//   import { LobbyClient, createChatPanel, occupantDisplay } from "./lobby.js";
-//   const lobby = new LobbyClient({ baseUrl: LOBBY_URL, onState: render });
-//   await lobby.join({ name: "Lux", kind: "agent", character: "momo" });
-//   lobby.connect(); // WebSocket live updates, HTTP polling fallback
-//   createChatPanel(document.getElementById("lobby-chat"), lobby);
-//   // render(state): for each occupant in occupantDisplay(state), draw
-//   // the chibi character at (x, y, z) with a NAME TAG above it showing
-//   // occupant.label — the Roblox model: everyone visible, names on top.
+// lobby.js — SPLAT lobby client (Phase 1), wired into src/main.js since
+// 2026-11-14: join on PLAY, occupants render in the arena with name tags,
+// chat panel docks in the HUD. Live server:
+// https://splat-lobby.oagenthq.workers.dev
 //
 // The lobby is a mini-Roblox: one shared room where the four chibi
 // characters (Momo / Bibo / Kiko / Pipi) gather, move around, and talk.

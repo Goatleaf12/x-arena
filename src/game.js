@@ -100,6 +100,9 @@ export class Game {
     this.previewChar = null
     this.pedestal = null
 
+    // ---- lobby occupants (other players/agents in the shared room) ----
+    this.lobbyOccupants = new Map() // id -> { group, tag, parts }
+
     // ---- projectiles / particles / splats ----
     this.projectiles = []
     this.projPool = []
@@ -331,6 +334,67 @@ export class Game {
   _clearPreview() {
     if (this.previewChar) { this.scene.remove(this.previewChar); this.previewChar = null }
     if (this.pedestal) { this.scene.remove(this.pedestal); this.pedestal = null }
+  }
+
+  // ================= lobby occupants =================
+  // Render other lobby occupants as chibi characters with name tags.
+  // Purely visual: they never fight, collide, or take damage.
+  _makeNameTag(text) {
+    const canvas = document.createElement('canvas')
+    canvas.width = 256
+    canvas.height = 64
+    const ctx = canvas.getContext('2d')
+    ctx.font = '800 30px system-ui, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.lineWidth = 6
+    ctx.strokeStyle = 'rgba(0,0,0,0.85)'
+    ctx.strokeText(text, 128, 32)
+    ctx.fillStyle = '#ffffff'
+    ctx.fillText(text, 128, 32)
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.colorSpace = THREE.SRGBColorSpace
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }))
+    sprite.scale.set(2.4, 0.6, 1)
+    sprite.position.y = 2.25
+    return sprite
+  }
+
+  setLobbyOccupants(list) {
+    const seen = new Set()
+    for (const o of list ?? []) {
+      seen.add(o.id)
+      let rec = this.lobbyOccupants.get(o.id)
+      if (!rec) {
+        const def = CHARACTERS.find((c) => c.id === o.character) || CHARACTERS[0]
+        const { group, parts } = createCharacter(def)
+        const tag = this._makeNameTag(o.label || o.name || 'Guest')
+        group.add(tag)
+        group.position.set(o.x ?? 0, 0, o.z ?? 0)
+        this.scene.add(group)
+        rec = { group, tag, parts }
+        this.lobbyOccupants.set(o.id, rec)
+      }
+      rec.group.position.set(o.x ?? 0, 0, o.z ?? 0)
+    }
+    for (const [id, rec] of [...this.lobbyOccupants]) {
+      if (!seen.has(id)) {
+        this.scene.remove(rec.group)
+        rec.tag.material.map?.dispose()
+        rec.tag.material.dispose()
+        this.lobbyOccupants.delete(id)
+      }
+    }
+  }
+
+  clearLobbyOccupants() {
+    this.setLobbyOccupants([])
+  }
+
+  _updateLobbyOccupants(dt) {
+    for (const rec of this.lobbyOccupants.values()) {
+      animateCharacter(rec.parts, dt, 0)
+    }
   }
 
   // ================= match flow =================
@@ -574,6 +638,10 @@ export class Game {
 
     // arena ambience always animates
     this.arena.update(dt, t)
+
+    // lobby occupants idle-animate in every state (select included:
+    // they hang out in the arena behind the select screen)
+    this._updateLobbyOccupants(dt)
 
     // muzzle light decay
     this.flashLight.intensity = Math.max(0, this.flashLight.intensity - dt * 160)

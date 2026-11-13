@@ -1,9 +1,8 @@
 # wrangler.toml — SPLAT lobby server (Phase 1).
 # Free tier only: one Durable Object, no KV / R2 / queues / paid bindings.
-# Deploy later with:  npx wrangler deploy   (from worker/)
+# Deployed 2026-11-14 via worker/deploy_lobby.py (Cloudflare API, no
+# wrangler login needed): https://splat-lobby.oagenthq.workers.dev
 # Run locally with:   npx wrangler dev     (http://localhost:8787)
-# NOTE: the Worker is NOT deployed yet. The live base URL does not exist
-# until someone runs `wrangler deploy` and records the workers.dev URL.
 
 name = "splat-lobby"
 main = "src/index.js"

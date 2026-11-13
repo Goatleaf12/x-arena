@@ -1,5 +1,85 @@
 import { Game } from './game.js'
 import { CHARACTERS } from './characters.js'
+import { LobbyClient, createChatPanel, occupantDisplay } from './lobby.js'
+
+// ---- SPLAT lobby (live): https://splat-lobby.oagenthq.workers.dev ----
+// One shared hangout room (Cloudflare Worker + Durable Object, free tier).
+// No wallet, no auth: joining just puts your chibi in the room with a
+// name tag, and your arena position is shared so others see you move.
+// The game works fully without it — a failed join only means solo play.
+// Dev override: ?lobby=http://localhost:8787 (wrangler dev --local).
+const LOBBY_URL = new URLSearchParams(location.search).get('lobby')
+  || 'https://splat-lobby.oagenthq.workers.dev'
+let lobby = null
+let lobbyPanel = null
+let lobbyMoveTimer = null
+
+function playerName() {
+  const input = $('player-name')
+  let name = (input?.value || '').trim().slice(0, 32)
+  if (!name) {
+    name = localStorage.getItem('splat_player_name') || ''
+    if (!name) {
+      name = 'Guest-' + Math.random().toString(36).slice(2, 6).toUpperCase()
+      try { localStorage.setItem('splat_player_name', name) } catch { /* ignore */ }
+    }
+  } else {
+    try { localStorage.setItem('splat_player_name', name) } catch { /* ignore */ }
+  }
+  return name
+}
+
+async function joinLobby(charId) {
+  await leaveLobby()
+  const countEl = $('lobby-count')
+  let client
+  try {
+    client = new LobbyClient({
+      baseUrl: LOBBY_URL,
+      onState: (state) => {
+        const others = occupantDisplay(state).filter((o) => o.id !== client.me?.id)
+        game.setLobbyOccupants(others)
+        if (countEl) {
+          const n = (state.occupants ?? []).length
+          countEl.textContent = n > 1 ? `👥 ${n} in lobby` : '👥 lobby: just you'
+        }
+      },
+      onError: (err) => console.warn('lobby:', err?.message || err),
+    })
+    await client.join({ name: playerName(), kind: 'human', character: charId })
+    client.connect()
+    lobby = client
+    window.__lobby = client // for automated testing / debugging
+    const container = $('lobby-chat')
+    if (container) {
+      container.classList.remove('hidden')
+      lobbyPanel = createChatPanel(container, lobby)
+    }
+    // share our arena position ~5x/s; LobbyClient throttles to ~10/s
+    lobbyMoveTimer = setInterval(() => {
+      if (!lobby || game.state !== 'playing' || !game.player?.alive) return
+      lobby.move(game.player.pos.x, game.player.pos.z).catch(() => {})
+    }, 200)
+  } catch (err) {
+    console.warn('lobby join failed (playing solo):', err?.message || err)
+    if (countEl) countEl.textContent = '👥 lobby offline — solo'
+  }
+}
+
+async function leaveLobby() {
+  if (lobbyMoveTimer) { clearInterval(lobbyMoveTimer); lobbyMoveTimer = null }
+  if (lobbyPanel) { try { lobbyPanel.destroy() } catch { /* ignore */ } lobbyPanel = null }
+  const container = $('lobby-chat')
+  if (container) container.classList.add('hidden')
+  if (lobby) {
+    const l = lobby
+    lobby = null
+    game.clearLobbyOccupants()
+    const countEl = $('lobby-count')
+    if (countEl) countEl.textContent = ''
+    await l.leave()
+  }
+}
 
 // ---- error trap: surface runtime errors into the DOM for headless testing ----
 window.addEventListener('error', (e) => {
@@ -84,11 +164,13 @@ game.showPreview(selected)
 $('start-btn').addEventListener('click', () => {
   $('select-screen').classList.add('hidden')
   game.start(selected)
+  joinLobby(selected)
 })
 
 $('again-btn').addEventListener('click', () => {
   $('end-screen').classList.add('hidden')
   game.start(selected)
+  joinLobby(selected)
 })
 
 $('change-char-btn').addEventListener('click', () => {
@@ -97,6 +179,14 @@ $('change-char-btn').addEventListener('click', () => {
   game.ui.hud.classList.add('hidden')
   game.showPreview(selected)
 })
+
+window.addEventListener('pagehide', () => { leaveLobby() })
+
+// prefill the lobby name input with the saved name (or a fresh Guest- id)
+try {
+  const saved = localStorage.getItem('splat_player_name')
+  if (saved && $('player-name')) $('player-name').value = saved
+} catch { /* ignore */ }
 
 $('mute-btn').addEventListener('click', () => game.toggleMute())
 
@@ -111,6 +201,7 @@ function saveLb(list) {
 
 ui.onEnd = (stats) => {
   lastStats = stats
+  leaveLobby() // match over: step out of the shared room (presence expires in 90 s anyway)
   // reset the on-chain submit button for the new match result
   const submitBtn = $('submit-score-btn')
   submitBtn.disabled = false

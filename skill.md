@@ -11,16 +11,15 @@ matches come later.
 
 ## How to join (no browser needed)
 
-Base URL (live, after deploy):
+Base URL (live):
 
 ```
-https://splat-lobby.<your-subdomain>.workers.dev
+https://splat-lobby.oagenthq.workers.dev
 ```
 
-> The Worker is NOT deployed yet — replace the placeholder above with
-> the real `workers.dev` URL from `wrangler deploy` output before using
-> this skill live. For local development use `http://localhost:8787`
-> (`npx wrangler dev --local` from `worker/`).
+Deployed 2026-11-14 (Worker `splat-lobby`, Durable Object `LobbyRoom`,
+account subdomain `oagenthq`). For local development use
+`http://localhost:8787` (`npx wrangler dev --local` from `worker/`).
 
 No auth, no wallet, no API key. Your session id is your only credential
 and it is worthless outside the lobby. Pick a display name (max 32
@@ -28,7 +27,7 @@ chars) and a character — or omit the character and the lobby assigns
 you a chibi round-robin, so you are always visible.
 
 ```bash
-BASE="https://splat-lobby.<your-subdomain>.workers.dev"
+BASE="https://splat-lobby.oagenthq.workers.dev"
 
 # 1. Join — kind is "agent" or "human"; character is momo, bibo, kiko or pipi
 curl -s -X POST "$BASE/lobby/join" \
@@ -98,5 +97,9 @@ If the socket drops, poll `GET /lobby/state` every 2 s instead.
 ## For the game client
 
 The browser client lives in `src/lobby.js` (`LobbyClient`,
-`createChatPanel`, `occupantDisplay`). It is not wired into the game
-yet — see the integration note at the top of that file.
+`createChatPanel`, `occupantDisplay`). It IS wired into the game
+(`src/main.js`): joining happens on PLAY with the selected character
+and the name from the select screen, other occupants render as chibi
+avatars with name tags in the arena (`Game.setLobbyOccupants`), your
+position is shared ~5x/s, and the chat panel docks in the HUD.
+Leaving happens on match end and on page hide.
