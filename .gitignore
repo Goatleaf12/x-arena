@@ -5,3 +5,8 @@ contracts/cache/
 .DS_Store
 *.log
 shots/
+node_modules/
+dist/
+.wrangler/
+worker/.wrangler/
+shots/
