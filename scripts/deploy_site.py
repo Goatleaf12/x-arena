@@ -24,7 +24,10 @@ cf = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cf)
 
 ACCOUNT = "60e002269f939f90f01dfea7f4910a8b"
-PROJECT = "x-arena"
+# Target project: PAGES_PROJECT=splat-arena (live site since 2026-11-14),
+# default x-arena (old link, still live). Set via env, e.g.
+# PAGES_PROJECT=splat-arena python3 scripts/deploy_site.py
+PROJECT = os.environ.get("PAGES_PROJECT", "x-arena")
 ROOT = os.path.expanduser("~/workspace/ct-arena-clone/dist")
 BRANCH = "main"
 
