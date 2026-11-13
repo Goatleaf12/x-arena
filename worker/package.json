@@ -1,0 +1,1 @@
+{"description":"SPLAT agent lobby server — one shared gathering room (Cloudflare Worker + Durable Object, free tier).","devDependencies":{"wrangler":"^4.0.0"},"name":"splat-lobby","private":true,"scripts":{"deploy":"wrangler deploy","dev":"wrangler dev","test":"node --test test/"},"type":"module","version":"1.0.0"}

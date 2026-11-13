@@ -26,8 +26,11 @@ export class Game {
     this.clock = new THREE.Clock()
     this.elapsed = 0
     this.timeLeft = MATCH_SECONDS
-    this.stats = { score: 0, kills: 0, deaths: 0, okb: 0, shots: 0, hits: 0 }
+    this.stats = { score: 0, kills: 0, deaths: 0, splat: 0, shots: 0, hits: 0 }
     this.keys = {}
+    this.touchMove = { x: 0, y: 0 } // virtual joystick vector, -1..1 (y: down positive)
+    this._touchFiring = false
+    this._lookTouch = null
     this.camYaw = 0
     this.camPitch = 0.32
     this.fireCd = 0
@@ -188,6 +191,85 @@ export class Game {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this.state === 'playing') this.pause()
     })
+    this._bindTouch()
+  }
+
+  // ================= touch controls (virtual joystick + fire button) =================
+  // Shown only on touch devices (html.touch); desktop keeps keyboard + mouse.
+  _bindTouch() {
+    const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0
+    if (!isTouch) return
+    document.documentElement.classList.add('touch')
+    const joy = document.getElementById('joy-base')
+    const knob = document.getElementById('joy-knob')
+    const fireBtn = document.getElementById('fire-btn')
+    const hint = document.getElementById('hint-bar')
+    if (hint) hint.textContent = 'Left stick move • Drag screen to look • 🔥 to splat'
+    if (!joy || !knob || !fireBtn) return
+    const R = 52 // joystick travel radius, px
+    let joyId = null
+    const setKnob = (dx, dy) => { knob.style.transform = `translate(${dx}px, ${dy}px)` }
+    joy.addEventListener('pointerdown', (e) => {
+      if (this.state !== 'playing') return
+      joyId = e.pointerId
+      try { joy.setPointerCapture(e.pointerId) } catch { /* ignore */ }
+      e.preventDefault()
+    })
+    joy.addEventListener('pointermove', (e) => {
+      if (e.pointerId !== joyId) return
+      const r = joy.getBoundingClientRect()
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2
+      let dx = e.clientX - cx, dy = e.clientY - cy
+      const len = Math.hypot(dx, dy)
+      if (len > R) { dx = dx / len * R; dy = dy / len * R }
+      setKnob(dx, dy)
+      this.touchMove.x = dx / R
+      this.touchMove.y = dy / R
+    })
+    const joyEnd = (e) => {
+      if (e.pointerId !== joyId) return
+      joyId = null
+      setKnob(0, 0)
+      this.touchMove.x = 0
+      this.touchMove.y = 0
+    }
+    joy.addEventListener('pointerup', joyEnd)
+    joy.addEventListener('pointercancel', joyEnd)
+    fireBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault()
+      if (this.state !== 'playing') return
+      this._touchFiring = true
+      this._tryFire()
+    })
+    const fireEnd = () => { this._touchFiring = false }
+    fireBtn.addEventListener('pointerup', fireEnd)
+    fireBtn.addEventListener('pointercancel', fireEnd)
+    fireBtn.addEventListener('pointerleave', fireEnd)
+    // drag-to-look: one finger dragging on the arena turns the camera
+    this.canvas.addEventListener('touchstart', (e) => {
+      if (this.state !== 'playing') return
+      const t = e.changedTouches[0]
+      this._lookTouch = { id: t.identifier, x: t.clientX, y: t.clientY }
+    }, { passive: true })
+    this.canvas.addEventListener('touchmove', (e) => {
+      if (!this._lookTouch) return
+      for (const t of e.changedTouches) {
+        if (t.identifier !== this._lookTouch.id) continue
+        this.camYaw -= (t.clientX - this._lookTouch.x) * 0.005
+        this.camPitch = THREE.MathUtils.clamp(this.camPitch - (t.clientY - this._lookTouch.y) * 0.004, -0.3, 0.55)
+        this._lookTouch.x = t.clientX
+        this._lookTouch.y = t.clientY
+      }
+      e.preventDefault()
+    }, { passive: false })
+    const lookEnd = (e) => {
+      if (!this._lookTouch) return
+      for (const t of e.changedTouches) {
+        if (t.identifier === this._lookTouch.id) this._lookTouch = null
+      }
+    }
+    this.canvas.addEventListener('touchend', lookEnd)
+    this.canvas.addEventListener('touchcancel', lookEnd)
   }
 
   _bindResize() {
@@ -285,7 +367,7 @@ export class Game {
       })
     })
 
-    this.stats = { score: 0, kills: 0, deaths: 0, okb: 0, shots: 0, hits: 0 }
+    this.stats = { score: 0, kills: 0, deaths: 0, splat: 0, shots: 0, hits: 0 }
     this.timeLeft = MATCH_SECONDS
     this._countdownT = 0
     this._countdownStep = -1
@@ -597,6 +679,11 @@ export class Game {
     if (this.keys.ArrowRight) this.camYaw -= 1.9 * dt
     if (this.keys.ArrowUp) this.camPitch = THREE.MathUtils.clamp(this.camPitch + 1.2 * dt, -0.3, 0.55)
     if (this.keys.ArrowDown) this.camPitch = THREE.MathUtils.clamp(this.camPitch - 1.2 * dt, -0.3, 0.55)
+    // touch joystick (analog): stick up = forward, left/right = strafe
+    if (this.touchMove.x || this.touchMove.y) {
+      mv.addScaledVector(fwd, -this.touchMove.y)
+      mv.addScaledVector(right, this.touchMove.x)
+    }
     const moving = mv.lengthSq() > 0.001 ? 1 : 0
     p.moving = moving
     if (moving) {
@@ -608,8 +695,8 @@ export class Game {
     this._collide(p.pos, 0.55)
     // slow regen after 4s without damage
     if (this.elapsed - p.lastHurt > 4 && p.hp < 100) p.hp = Math.min(100, p.hp + 2 * dt)
-    // hold-to-fire
-    if (this._dragging && document.pointerLockElement === this.canvas) this._tryFire()
+    // hold-to-fire (mouse drag with pointer lock, or touch fire button)
+    if ((this._dragging && document.pointerLockElement === this.canvas) || this._touchFiring) this._tryFire()
     animateCharacter(p.char.parts, dt, moving)
   }
 
@@ -777,11 +864,11 @@ export class Game {
           coin.active = false
           coin.timer = 8
           coin.mesh.visible = false
-          this.stats.okb++
+          this.stats.splat++
           this.stats.score += 25
           this.player.hp = Math.min(100, this.player.hp + 20)
           this._burst(coin.mesh.position, 0xf5b301, 14, 3, 3)
-          this.ui.addKillfeed('OKB collected!  +25  •  +20 HP')
+          this.ui.addKillfeed('SPLAT collected!  +25  •  +20 HP')
           this.sfx.coin()
           this._updateHud()
         }
@@ -811,14 +898,14 @@ export class Game {
     const ss = Math.floor(this.timeLeft % 60).toString().padStart(2, '0')
     const vals = {
       score: String(this.stats.score),
-      kills: `${this.stats.kills} splats • ${this.stats.okb} OKB`,
-      okb: String(this.stats.okb),
+      kills: `${this.stats.kills} splats • ${this.stats.splat} SPLAT`,
+      splat: String(this.stats.splat),
       timer: `${mm}:${ss}`,
       hp: Math.max(0, Math.round(this.player ? this.player.hp : 100))
     }
     if (force || vals.score !== this.lastHud.score) u.score.textContent = vals.score
     if (force || vals.kills !== this.lastHud.kills) u.kills.textContent = vals.kills
-    if (force || vals.okb !== this.lastHud.okb) u.okbN.textContent = vals.okb
+    if (force || vals.splat !== this.lastHud.splat) u.splatN.textContent = vals.splat
     if (force || vals.timer !== this.lastHud.timer) {
       u.timer.textContent = vals.timer
       u.timer.classList.toggle('low', this.timeLeft <= 15)

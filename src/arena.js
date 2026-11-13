@@ -88,7 +88,7 @@ export function buildArena(scene) {
     group.add(rail)
   }
 
-  // ---- X Layer banners on the wall ----
+  // ---- arena banners on the wall ----
   const bannerTex = makeBannerTexture()
   const banners = []
   for (let i = 0; i < 4; i++) {

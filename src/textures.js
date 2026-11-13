@@ -114,7 +114,7 @@ export function makeBarrelTexture() {
   })
 }
 
-/** X Layer banner: navy gradient, big X ARENA, gold underline. */
+/** Arena wall banner: navy gradient, splat mark + ARENA, gold underline. */
 export function makeBannerTexture() {
   const c = document.createElement('canvas')
   c.width = 1024; c.height = 384
@@ -134,13 +134,19 @@ export function makeBannerTexture() {
   ctx.fillStyle = '#f5b301'
   ctx.font = '900 150px system-ui, Arial, sans-serif'
   ctx.textAlign = 'center'
-  ctx.fillText('X', 150, 240)
+  // pink paint-splat blob where the X used to be
+  ctx.fillStyle = '#ff5d8f'
+  ctx.beginPath(); ctx.arc(150, 200, 62, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(108, 158, 26, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(196, 160, 20, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(196, 244, 24, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(112, 246, 16, 0, Math.PI * 2); ctx.fill()
   ctx.fillStyle = '#ffffff'
   ctx.font = '900 118px system-ui, Arial, sans-serif'
   ctx.fillText('ARENA', 590, 232)
   ctx.fillStyle = '#9db4ff'
   ctx.font = '700 44px system-ui, Arial, sans-serif'
-  ctx.fillText('O N   X   L A Y E R', 512, 320)
+  ctx.fillText('P L A Y  •  S P L A T  •  W I N', 512, 320)
   ctx.fillStyle = '#f5b301'
   ctx.fillRect(212, 268, 600, 8)
   const tex = new THREE.CanvasTexture(c)
@@ -149,7 +155,7 @@ export function makeBannerTexture() {
   return tex
 }
 
-/** Gold OKB coin face. */
+/** Gold SPLAT coin face. */
 export function makeCoinTexture() {
   return canvasTexture(256, (ctx, s) => {
     const g = ctx.createRadialGradient(s / 2, s / 2, 10, s / 2, s / 2, s / 2)
@@ -162,10 +168,10 @@ export function makeCoinTexture() {
     ctx.lineWidth = 10
     ctx.beginPath(); ctx.arc(s / 2, s / 2, s / 2 - 14, 0, Math.PI * 2); ctx.stroke()
     ctx.fillStyle = '#0b0e1a'
-    ctx.font = '900 74px system-ui, Arial, sans-serif'
+    ctx.font = '900 44px system-ui, Arial, sans-serif'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText('OKB', s / 2, s / 2 + 4)
+    ctx.fillText('SPLAT', s / 2, s / 2 + 4)
   })
 }
 

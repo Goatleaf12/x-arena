@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>X Arena — Cute Paintball Shooter on X Layer</title>
-<meta name="description" content="X Arena: a cute cartoon 3D arena shooter. Pick your fighter, splat your friends, collect OKB. Built on X Layer for the TapeOut Accelerate hackathon." />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230b0e1a'/%3E%3Ctext x='32' y='44' font-size='36' font-family='Arial' font-weight='bold' fill='%23f5b301' text-anchor='middle'%3EX%3C/text%3E%3C/svg%3E" />
+<title>SPLAT — Play. Win. SPLAT. | X Arena Paintball Shooter</title>
+<meta name="description" content="SPLAT: a cute cartoon 3D paintball arena shooter. Pick your fighter, splat the bots, and climb the board. The SPLAT token launches soon on Gang.fun (BSC)." />
+<link rel="icon" type="image/png" href="./assets/splat-favicon.png" />
 <style>
   :root{
     --navy:#0b0e1a; --navy2:#141a2e; --blue:#3b82f6; --purple:#8b5cf6;
@@ -31,8 +31,8 @@
   #hud-timer.low{color:#ff5d6c;animation:pulse .8s infinite}
   @keyframes pulse{50%{transform:translateX(-50%) scale(1.07)}}
   #hud-top-right{position:absolute;top:16px;right:16px;padding:12px 18px;text-align:right}
-  #hud-okb{font-size:26px;font-weight:800;color:var(--gold)}
-  #hud-okb .label{font-size:11px;letter-spacing:.18em;color:#9db4ff;font-weight:700;display:block}
+  #hud-splat{font-size:26px;font-weight:800;color:var(--gold)}
+  #hud-splat .label{font-size:11px;letter-spacing:.18em;color:#9db4ff;font-weight:700;display:block}
   #hud-health-wrap{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);width:min(420px,72vw)}
   #hud-health-bar{height:18px;border-radius:999px;background:rgba(0,0,0,.55);
     border:1px solid rgba(255,255,255,.25);overflow:hidden}
@@ -71,6 +71,23 @@
     width:42px;height:42px;border-radius:12px;background:var(--panel);border:1px solid rgba(255,255,255,.16);
     color:#fff;font-size:19px;display:flex;align-items:center;justify-content:center}
 
+  /* ---------- touch controls (touch devices only) ---------- */
+  #game-canvas{touch-action:none}
+  #touch-controls{display:none}
+  html.touch #touch-controls{display:block}
+  #joy-base{position:absolute;left:22px;bottom:96px;width:124px;height:124px;border-radius:50%;
+    background:rgba(11,14,26,.45);border:2px solid rgba(255,255,255,.28);
+    pointer-events:auto;touch-action:none;display:flex;align-items:center;justify-content:center;
+    user-select:none;-webkit-user-select:none}
+  #joy-knob{width:56px;height:56px;border-radius:50%;
+    background:linear-gradient(135deg,#ff7ab8,#8b5cf6);
+    box-shadow:0 4px 14px rgba(0,0,0,.5);pointer-events:none}
+  #fire-btn{position:absolute;right:22px;bottom:102px;width:84px;height:84px;border-radius:50%;
+    border:3px solid rgba(255,255,255,.35);background:linear-gradient(135deg,#f5b301,#ff5d6c);
+    font-size:34px;pointer-events:auto;touch-action:none;cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,.45);user-select:none;-webkit-user-select:none}
+  #fire-btn:active{transform:scale(.93)}
+
   /* ---------- Overlay screens ---------- */
   .screen{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;
     justify-content:center;background:linear-gradient(180deg,rgba(11,14,26,.22) 0%,rgba(11,14,26,.62) 100%);
@@ -78,6 +95,7 @@
   .logo-badge{display:inline-flex;align-items:center;gap:10px;background:var(--panel);
     border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:8px 18px;
     font-size:13px;font-weight:700;letter-spacing:.14em;color:#cdd8ff}
+  .logo-badge img{width:28px;height:28px;border-radius:50%;display:block}
   .logo-badge .x{color:var(--gold);font-size:18px}
   h1.title{font-size:clamp(44px,8vw,84px);font-weight:900;letter-spacing:-.02em;line-height:.95;
     margin:18px 0 6px;text-shadow:0 6px 30px rgba(0,0,0,.6)}
@@ -91,9 +109,10 @@
     border-radius:20px;padding:16px 12px 14px;cursor:pointer;text-align:center;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
   .char-card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.45)}
   .char-card.selected{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,179,1,.35),0 10px 30px rgba(0,0,0,.45);transform:translateY(-4px)}
-  .char-dot{width:74px;height:74px;border-radius:50%;margin:0 auto 10px;
-    display:flex;align-items:center;justify-content:center;font-size:38px;
-    box-shadow:inset 0 -8px 0 rgba(0,0,0,.14),0 6px 16px rgba(0,0,0,.35)}
+  .char-portrait{width:132px;height:132px;margin:0 auto 8px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center}
+  .char-img{width:124px;height:124px;object-fit:contain;display:block;
+    filter:drop-shadow(0 10px 12px rgba(0,0,0,.45))}
   .char-card h3{font-size:17px;font-weight:800}
   .char-card p{font-size:12px;color:#b9c4ea;line-height:1.45;margin-top:4px;min-height:34px}
   .char-card .tag{display:inline-block;margin-top:8px;font-size:11px;font-weight:800;letter-spacing:.08em;
@@ -109,6 +128,28 @@
     padding:7px 12px;font-size:12.5px;font-weight:600;color:#e6ebff}
   .key-chip b{color:var(--gold)}
   .footnote{margin-top:20px;font-size:12px;color:#93a1c9;font-weight:600;text-align:center;line-height:1.6}
+  /* token section (landing) */
+  #select-screen{justify-content:flex-start;padding-top:40px}
+  #token-section{width:100%;display:flex;flex-direction:column;align-items:center;margin-top:28px}
+  .token-card{background:var(--panel2);border:1px solid rgba(255,255,255,.16);border-radius:22px;
+    padding:26px 24px 22px;max-width:640px;width:100%;text-align:center}
+  .token-logo{width:84px;height:84px;border-radius:50%;box-shadow:0 10px 26px rgba(0,0,0,.5)}
+  .token-card h2{font-size:24px;font-weight:900;letter-spacing:.02em;margin:12px 0 8px}
+  .token-status{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:800;
+    color:#ffe9a8;background:rgba(245,179,1,.14);border:1px solid rgba(245,179,1,.4);
+    padding:6px 14px;border-radius:999px}
+  .status-dot{width:9px;height:9px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399}
+  .token-blurb{font-size:14px;color:#dbe4ff;line-height:1.55;margin:14px auto 0;max-width:520px}
+  .token-stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:18px 0 6px}
+  .token-stat{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12);border-radius:14px;
+    padding:12px 16px;min-width:150px}
+  .token-stat .v{font-size:19px;font-weight:800;color:var(--gold)}
+  .token-stat .l{font-size:10.5px;letter-spacing:.14em;color:#9db4ff;font-weight:700;margin-top:3px}
+  .token-prize{font-size:14px;font-weight:600;color:#ffe9a8;margin-top:12px;line-height:1.5}
+  .token-link{display:inline-block;margin-top:14px;font-size:15px;font-weight:800;color:#1a1200;
+    background:linear-gradient(90deg,#f5b301,#ff8a3d);padding:11px 28px;border-radius:999px;text-decoration:none}
+  .token-note{font-size:12px;color:#93a1c9;line-height:1.6;margin-top:14px}
+  .site-footer{margin:26px 0 10px;font-size:14px;font-weight:800;letter-spacing:.14em;color:#cdd8ff;text-align:center}
   /* end screen */
   #end-stats{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:20px 0 6px}
   .stat-box{background:var(--panel2);border:1px solid rgba(255,255,255,.14);border-radius:16px;
@@ -139,11 +180,11 @@
   <div id="hud-top-left" class="hud-panel">
     <div class="label">SCORE</div>
     <div id="hud-score">0</div>
-    <div id="hud-kills">0 splats &bull; 0 OKB</div>
+    <div id="hud-kills">0 splats &bull; 0 SPLAT</div>
   </div>
   <div id="hud-timer" class="hud-panel">2:00</div>
   <div id="hud-top-right" class="hud-panel">
-    <div id="hud-okb"><span class="label">OKB COLLECTED</span><span id="hud-okb-n">0</span></div>
+    <div id="hud-splat"><span class="label">SPLAT COLLECTED</span><span id="hud-splat-n">0</span></div>
   </div>
   <div id="killfeed"></div>
   <div id="crosshair"><div class="dot"></div></div>
@@ -155,15 +196,19 @@
   </div>
   <div id="hint-bar">WASD move &nbsp;&bull;&nbsp; Mouse aim &nbsp;&bull;&nbsp; Click splat &nbsp;&bull;&nbsp; Arrow keys turn</div>
   <button id="mute-btn" title="Mute / unmute sound">&#128266;</button>
+  <div id="touch-controls">
+    <div id="joy-base"><div id="joy-knob"></div></div>
+    <button id="fire-btn" title="Fire">&#128293;</button>
+  </div>
 </div>
 <div id="damage-vignette"></div>
 
 <!-- CHARACTER SELECT -->
 <div id="select-screen" class="screen">
-  <div class="logo-badge"><span class="x">X</span> X LAYER &nbsp;&bull;&nbsp; TAPEOUT ACCELERATE</div>
+  <div class="logo-badge"><img src="./assets/splat-logo.png" alt="SPLAT logo" /> SPLAT</div>
   <h1 class="title"><span class="x">X</span> <span class="arena">ARENA</span></h1>
   <p class="subtitle">A cute paintball arena shooter. Pick your fighter, splat the bots,
-    and grab <b>OKB coins</b> — all inside an arena built on <b>X Layer</b>.</p>
+    and grab <b>SPLAT points</b> — the home of the <b>SPLAT</b> token, launching soon on Gang.fun.</p>
   <div id="char-cards"></div>
   <button id="start-btn" class="big-btn">PLAY &nbsp;&#9654;</button>
   <div class="controls-row">
@@ -175,6 +220,28 @@
   </div>
   <p class="footnote">100% original characters, code &amp; art — no profile photos, no sign-in.<br/>
   Desktop &amp; keyboard recommended. Best in Chrome / Edge.</p>
+
+  <section id="token-section">
+    <div class="token-card">
+      <img class="token-logo" src="./assets/splat-logo.png" alt="SPLAT logo" />
+      <h2>SPLAT — THE TOKEN</h2>
+      <p class="token-status"><span class="status-dot"></span> Launching soon on Gang.fun</p>
+      <p class="token-blurb">SPLAT is the token of this arena — a Gang.fun V3 bonding-curve token on BNB Chain.
+        Play the game now; the token launches soon.</p>
+      <div class="token-stats">
+        <div class="token-stat"><div class="v">1,000,000,000</div><div class="l">TOTAL SUPPLY</div></div>
+        <div class="token-stat"><div class="v">800M / 200M</div><div class="l">CURVE / POOL</div></div>
+        <div class="token-stat"><div class="v">2%</div><div class="l">POOL TAX (BUY / SELL)</div></div>
+        <div class="token-stat"><div class="v">0%</div><div class="l">DIVIDEND (PLANNED)</div></div>
+        <div class="token-stat"><div class="v">6 BNB</div><div class="l">GRADUATION TARGET</div></div>
+        <div class="token-stat"><div class="v">70% of 1%</div><div class="l">CREATOR FEE → PRIZE POOL</div></div>
+      </div>
+      <p class="token-prize">🏆 Prize pool: <b>0 SPLAT</b> — the pool starts when the token launches. Trading fees will fund future prizes.</p>
+      <a class="token-link" href="https://gang.fun/" target="_blank" rel="noopener">Visit Gang.fun ↗</a>
+      <p class="token-note">No contract address yet — the SPLAT token has not launched. In-game SPLAT points are game points, not tokens. No price, no holders, no market stats until launch.</p>
+    </div>
+    <p class="site-footer">SPLAT — Play. Win. SPLAT.</p>
+  </section>
 </div>
 
 <!-- END SCREEN -->

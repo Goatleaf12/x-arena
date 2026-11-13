@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8" /><title>X Arena — character snapshots (dev only)</title></head>
+<body>
+<canvas id="snap" width="480" height="480"></canvas>
+<script type="module">
+import * as THREE from 'three'
+import { CHARACTERS, createCharacter } from './src/characters.js'
+
+// Dev-only snapshot page: renders each fighter once on a transparent
+// background and exposes PNG data URLs for scripts/snapshot_chars.js.
+// NOT part of the game; never linked from index.html.
+const canvas = document.getElementById('snap')
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true })
+renderer.setSize(480, 480)
+renderer.setClearColor(0x000000, 0)
+
+const scene = new THREE.Scene()
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a5a, 1.15))
+const key = new THREE.DirectionalLight(0xffffff, 1.6)
+key.position.set(2.5, 4, 3)
+scene.add(key)
+const fill = new THREE.DirectionalLight(0xbfd4ff, 0.7)
+fill.position.set(-3, 1.5, 2)
+scene.add(fill)
+
+const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 20)
+camera.position.set(0.85, 1.05, 3.7)
+camera.lookAt(0, 0.92, 0)
+
+const out = {}
+for (const def of CHARACTERS) {
+  const { group } = createCharacter(def)
+  group.rotation.y = 0.55
+  scene.add(group)
+  renderer.render(scene, camera)
+  out[def.id] = canvas.toDataURL('image/png')
+  scene.remove(group)
+}
+window.__snapshots = out
+window.__snapshotsReady = true
+document.title = 'snapshots ready'
+</script>
+</body>
+</html>

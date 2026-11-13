@@ -18,7 +18,7 @@ const ui = {
   hud: $('hud'),
   score: $('hud-score'),
   kills: $('hud-kills'),
-  okbN: $('hud-okb-n'),
+  splatN: $('hud-splat-n'),
   timer: $('hud-timer'),
   healthFill: $('hud-health-fill'),
   healthText: $('hud-health-text'),
@@ -64,8 +64,8 @@ CHARACTERS.forEach((c) => {
   card.className = 'char-card' + (c.id === selected ? ' selected' : '')
   card.dataset.id = c.id
   card.innerHTML = `
-    <div class="char-dot" style="background:${hexCss(c.color)}">
-      <span style="font-size:34px;font-weight:900;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.35)">${c.name[0]}</span>
+    <div class="char-portrait" style="background:radial-gradient(circle at 50% 42%, ${hexCss(c.color)}38, transparent 72%)">
+      <img class="char-img" src="./assets/char-${c.id}.png" alt="${c.name} the ${c.tag.toLowerCase()}" draggable="false" />
     </div>
     <h3>${c.name}</h3>
     <p>${c.desc}</p>
@@ -134,7 +134,7 @@ ui.onEnd = (stats) => {
     <div class="stat-box"><div class="v">${stats.score}</div><div class="l">SCORE</div></div>
     <div class="stat-box"><div class="v">${stats.kills}</div><div class="l">SPLATS</div></div>
     <div class="stat-box"><div class="v">${stats.deaths}</div><div class="l">SPLATTED</div></div>
-    <div class="stat-box"><div class="v">${stats.okb}</div><div class="l">OKB</div></div>
+    <div class="stat-box"><div class="v">${stats.splat}</div><div class="l">SPLAT</div></div>
     <div class="stat-box"><div class="v">${stats.accuracy}%</div><div class="l">ACCURACY</div></div>`
   $('lb-list').innerHTML = list.map((e, i) =>
     `<li class="${e === entry ? 'me' : ''}"><span>#${i + 1} ${e.name} • ${e.date}</span><span>${e.score} pts • ${e.kills} splats</span></li>`
