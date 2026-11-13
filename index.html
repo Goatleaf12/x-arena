@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>X Arena — Cute Paintball Shooter on X Layer</title>
+<meta name="description" content="X Arena: a cute cartoon 3D arena shooter. Pick your fighter, splat your friends, collect OKB. Built on X Layer for the TapeOut Accelerate hackathon." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230b0e1a'/%3E%3Ctext x='32' y='44' font-size='36' font-family='Arial' font-weight='bold' fill='%23f5b301' text-anchor='middle'%3EX%3C/text%3E%3C/svg%3E" />
+<style>
+  :root{
+    --navy:#0b0e1a; --navy2:#141a2e; --blue:#3b82f6; --purple:#8b5cf6;
+    --gold:#f5b301; --pink:#ff7ab8; --mint:#34d399; --white:#ffffff;
+    --panel:rgba(11,14,26,.82); --panel2:rgba(20,26,46,.85);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{width:100%;height:100%;overflow:hidden;background:#0b0e1a;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#fff}
+  #game-canvas{position:fixed;inset:0;display:block;cursor:crosshair}
+  .hidden{display:none !important}
+
+  /* ---------- HUD ---------- */
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:10}
+  .hud-panel{background:var(--panel);border:1px solid rgba(255,255,255,.14);
+    border-radius:16px;backdrop-filter:blur(6px);box-shadow:0 6px 24px rgba(0,0,0,.35)}
+  #hud-top-left{position:absolute;top:16px;left:16px;padding:12px 18px;min-width:170px}
+  #hud-top-left .label{font-size:11px;letter-spacing:.18em;color:#9db4ff;font-weight:700}
+  #hud-score{font-size:34px;font-weight:800;line-height:1;color:var(--gold)}
+  #hud-kills{font-size:13px;color:#d7e0ff;margin-top:5px;font-weight:600}
+  #hud-timer{position:absolute;top:16px;left:50%;transform:translateX(-50%);
+    padding:10px 26px;font-size:30px;font-weight:800;letter-spacing:.05em;text-align:center}
+  #hud-timer.low{color:#ff5d6c;animation:pulse .8s infinite}
+  @keyframes pulse{50%{transform:translateX(-50%) scale(1.07)}}
+  #hud-top-right{position:absolute;top:16px;right:16px;padding:12px 18px;text-align:right}
+  #hud-okb{font-size:26px;font-weight:800;color:var(--gold)}
+  #hud-okb .label{font-size:11px;letter-spacing:.18em;color:#9db4ff;font-weight:700;display:block}
+  #hud-health-wrap{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);width:min(420px,72vw)}
+  #hud-health-bar{height:18px;border-radius:999px;background:rgba(0,0,0,.55);
+    border:1px solid rgba(255,255,255,.25);overflow:hidden}
+  #hud-health-fill{height:100%;width:100%;border-radius:999px;
+    background:linear-gradient(90deg,#34d399,#a3e635);transition:width .25s ease, background .25s ease}
+  #hud-health-fill.hurt{background:linear-gradient(90deg,#ff5d6c,#ff9f43)}
+  #hud-health-text{text-align:center;font-size:12px;font-weight:700;letter-spacing:.12em;
+    color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);margin-top:5px}
+  #crosshair{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%)}
+  #crosshair::before,#crosshair::after{content:"";position:absolute;background:#fff;
+    box-shadow:0 0 4px rgba(0,0,0,.9);border-radius:2px}
+  #crosshair::before{left:12px;top:0;width:2px;height:26px}
+  #crosshair::after{left:0;top:12px;width:26px;height:2px}
+  #crosshair .dot{position:absolute;left:11px;top:11px;width:4px;height:4px;border-radius:50%;background:var(--gold)}
+  #hitmarker{position:absolute;left:50%;top:50%;width:34px;height:34px;transform:translate(-50%,-50%) rotate(45deg);opacity:0}
+  #hitmarker::before,#hitmarker::after{content:"";position:absolute;background:#ffe14d;
+    box-shadow:0 0 6px rgba(0,0,0,.8);border-radius:2px}
+  #hitmarker::before{left:16px;top:0;width:3px;height:34px}
+  #hitmarker::after{left:0;top:16px;width:34px;height:3px}
+  #hitmarker.show{animation:hitpop .22s ease-out}
+  @keyframes hitpop{0%{opacity:1;transform:translate(-50%,-50%) rotate(45deg) scale(1.5)}100%{opacity:0;transform:translate(-50%,-50%) rotate(45deg) scale(.9)}}
+  #killfeed{position:absolute;top:96px;right:16px;text-align:right;font-size:13px;font-weight:600}
+  #killfeed div{background:var(--panel);border-radius:10px;padding:6px 12px;margin-bottom:6px;
+    border:1px solid rgba(255,255,255,.12);animation:feedin .25s ease-out}
+  @keyframes feedin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+  #damage-vignette{position:fixed;inset:0;pointer-events:none;z-index:9;opacity:0;
+    background:radial-gradient(ellipse at center,transparent 55%,rgba(255,30,60,.55) 100%)}
+  #damage-vignette.show{animation:dmg .5s ease-out}
+  @keyframes dmg{0%{opacity:1}100%{opacity:0}}
+  #center-msg{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);
+    font-size:44px;font-weight:800;text-shadow:0 3px 12px rgba(0,0,0,.7);text-align:center;white-space:nowrap}
+  #hint-bar{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);
+    font-size:12px;font-weight:600;color:#e5eaff;background:rgba(11,14,26,.65);
+    padding:7px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.12);white-space:nowrap}
+  #mute-btn{position:absolute;right:16px;bottom:22px;pointer-events:auto;cursor:pointer;
+    width:42px;height:42px;border-radius:12px;background:var(--panel);border:1px solid rgba(255,255,255,.16);
+    color:#fff;font-size:19px;display:flex;align-items:center;justify-content:center}
+
+  /* ---------- Overlay screens ---------- */
+  .screen{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;background:linear-gradient(180deg,rgba(11,14,26,.22) 0%,rgba(11,14,26,.62) 100%);
+    padding:24px;overflow-y:auto}
+  .logo-badge{display:inline-flex;align-items:center;gap:10px;background:var(--panel);
+    border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:8px 18px;
+    font-size:13px;font-weight:700;letter-spacing:.14em;color:#cdd8ff}
+  .logo-badge .x{color:var(--gold);font-size:18px}
+  h1.title{font-size:clamp(44px,8vw,84px);font-weight:900;letter-spacing:-.02em;line-height:.95;
+    margin:18px 0 6px;text-shadow:0 6px 30px rgba(0,0,0,.6)}
+  h1.title .x{color:var(--gold)}
+  h1.title .arena{background:linear-gradient(90deg,#60a5fa,#a78bfa,#ff7ab8);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .subtitle{font-size:clamp(14px,2.4vw,19px);color:#dbe4ff;font-weight:600;text-align:center;max-width:640px;line-height:1.5}
+  .subtitle b{color:var(--gold)}
+  #char-cards{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin:26px 0 8px}
+  .char-card{width:158px;background:var(--panel2);border:2px solid rgba(255,255,255,.14);
+    border-radius:20px;padding:16px 12px 14px;cursor:pointer;text-align:center;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
+  .char-card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.45)}
+  .char-card.selected{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,179,1,.35),0 10px 30px rgba(0,0,0,.45);transform:translateY(-4px)}
+  .char-dot{width:74px;height:74px;border-radius:50%;margin:0 auto 10px;
+    display:flex;align-items:center;justify-content:center;font-size:38px;
+    box-shadow:inset 0 -8px 0 rgba(0,0,0,.14),0 6px 16px rgba(0,0,0,.35)}
+  .char-card h3{font-size:17px;font-weight:800}
+  .char-card p{font-size:12px;color:#b9c4ea;line-height:1.45;margin-top:4px;min-height:34px}
+  .char-card .tag{display:inline-block;margin-top:8px;font-size:11px;font-weight:800;letter-spacing:.08em;
+    padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.12);color:#ffe9a8}
+  .big-btn{pointer-events:auto;cursor:pointer;border:none;border-radius:999px;
+    background:linear-gradient(90deg,#f5b301,#ff8a3d);color:#1a1200;
+    font-size:19px;font-weight:900;letter-spacing:.04em;padding:15px 46px;margin-top:22px;
+    box-shadow:0 10px 28px rgba(245,179,1,.35);transition:transform .12s ease,box-shadow .12s ease}
+  .big-btn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 14px 34px rgba(245,179,1,.45)}
+  .big-btn.secondary{background:rgba(255,255,255,.12);color:#fff;box-shadow:none;font-size:15px;padding:11px 28px}
+  .controls-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .key-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:10px;
+    padding:7px 12px;font-size:12.5px;font-weight:600;color:#e6ebff}
+  .key-chip b{color:var(--gold)}
+  .footnote{margin-top:20px;font-size:12px;color:#93a1c9;font-weight:600;text-align:center;line-height:1.6}
+  /* end screen */
+  #end-stats{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:20px 0 6px}
+  .stat-box{background:var(--panel2);border:1px solid rgba(255,255,255,.14);border-radius:16px;
+    padding:14px 22px;text-align:center;min-width:118px}
+  .stat-box .v{font-size:30px;font-weight:800;color:var(--gold)}
+  .stat-box .l{font-size:11px;letter-spacing:.16em;color:#9db4ff;font-weight:700;margin-top:2px}
+  #leaderboard{margin-top:14px;background:var(--panel2);border:1px solid rgba(255,255,255,.14);
+    border-radius:16px;padding:14px 20px;min-width:min(420px,88vw)}
+  #leaderboard h3{font-size:13px;letter-spacing:.16em;color:#9db4ff;margin-bottom:8px}
+  #leaderboard ol{list-style:none}
+  #leaderboard li{display:flex;justify-content:space-between;font-size:14px;font-weight:600;
+    padding:5px 2px;border-bottom:1px solid rgba(255,255,255,.07)}
+  #leaderboard li:last-child{border-bottom:none}
+  #leaderboard li.me{color:var(--gold)}
+  #errlog{display:none}
+</style>
+</head>
+<body>
+<canvas id="game-canvas"></canvas>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div id="hud-top-left" class="hud-panel">
+    <div class="label">SCORE</div>
+    <div id="hud-score">0</div>
+    <div id="hud-kills">0 splats &bull; 0 OKB</div>
+  </div>
+  <div id="hud-timer" class="hud-panel">2:00</div>
+  <div id="hud-top-right" class="hud-panel">
+    <div id="hud-okb"><span class="label">OKB COLLECTED</span><span id="hud-okb-n">0</span></div>
+  </div>
+  <div id="killfeed"></div>
+  <div id="crosshair"><div class="dot"></div></div>
+  <div id="hitmarker"></div>
+  <div id="center-msg"></div>
+  <div id="hud-health-wrap">
+    <div id="hud-health-bar"><div id="hud-health-fill"></div></div>
+    <div id="hud-health-text">HEALTH 100</div>
+  </div>
+  <div id="hint-bar">WASD move &nbsp;&bull;&nbsp; Mouse aim &nbsp;&bull;&nbsp; Click splat &nbsp;&bull;&nbsp; Arrow keys turn</div>
+  <button id="mute-btn" title="Mute / unmute sound">&#128266;</button>
+</div>
+<div id="damage-vignette"></div>
+
+<!-- CHARACTER SELECT -->
+<div id="select-screen" class="screen">
+  <div class="logo-badge"><span class="x">X</span> X LAYER &nbsp;&bull;&nbsp; TAPEOUT ACCELERATE</div>
+  <h1 class="title"><span class="x">X</span> <span class="arena">ARENA</span></h1>
+  <p class="subtitle">A cute paintball arena shooter. Pick your fighter, splat the bots,
+    and grab <b>OKB coins</b> — all inside an arena built on <b>X Layer</b>.</p>
+  <div id="char-cards"></div>
+  <button id="start-btn" class="big-btn">PLAY &nbsp;&#9654;</button>
+  <div class="controls-row">
+    <div class="key-chip"><b>WASD</b> move</div>
+    <div class="key-chip"><b>Mouse</b> aim</div>
+    <div class="key-chip"><b>Click</b> shoot paint</div>
+    <div class="key-chip"><b>Arrows</b> turn camera</div>
+    <div class="key-chip"><b>Esc</b> pause</div>
+  </div>
+  <p class="footnote">100% original characters, code &amp; art — no profile photos, no sign-in.<br/>
+  Desktop &amp; keyboard recommended. Best in Chrome / Edge.</p>
+</div>
+
+<!-- END SCREEN -->
+<div id="end-screen" class="screen hidden">
+  <div class="logo-badge"><span class="x">X</span> MATCH OVER</div>
+  <h1 class="title" id="end-title">TIME'S UP!</h1>
+  <p class="subtitle" id="end-subtitle"></p>
+  <div id="end-stats"></div>
+  <div id="leaderboard"><h3>LOCAL LEADERBOARD — TOP 5</h3><ol id="lb-list"></ol></div>
+  <button id="again-btn" class="big-btn">PLAY AGAIN</button>
+  <button id="change-char-btn" class="big-btn secondary">Change character</button>
+</div>
+
+<div id="errlog"></div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
