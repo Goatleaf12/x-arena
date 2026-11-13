@@ -5,8 +5,8 @@ import { makeCoinTexture } from './textures.js'
 import { Sfx } from './audio.js'
 
 const MATCH_SECONDS = 120
-const PLAYER_SPEED = 5.6
-const BOT_SPEED = 3.4
+const PLAYER_SPEED = 6.5
+const BOT_SPEED = 4.0
 const PLAYER_DAMAGE = 34
 const BOT_DAMAGE = 7
 
@@ -38,6 +38,10 @@ export class Game {
     this._isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0
     this.camYaw = 0
     this.camPitch = 0.32
+    // smoothed camera aim: mouse/keys set the target, the camera eases
+    // after it (instant camera = the "kaku" feel Hans reported 2026-11-14)
+    this.camYawS = 0
+    this.camPitchS = 0.32
     this.fireCd = 0
     this.lastHud = {}
     this._countdownT = 0
@@ -57,7 +61,7 @@ export class Game {
 
     // ---- scene ----
     this.scene = new THREE.Scene()
-    this.scene.fog = new THREE.Fog(0xbfe3ff, 55, 130)
+    this.scene.fog = new THREE.Fog(0xbfe3ff, 80, 190)
     this.camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 300)
 
     // sky dome: vertical gradient
@@ -420,11 +424,14 @@ export class Game {
     this.scene.add(pc.group)
     this.player = {
       char: pc, pos: pc.group.position, yaw: Math.PI, hp: 100, alive: true,
-      respawnT: 0, lastHurt: -10, speed: PLAYER_SPEED, moving: 0
+      respawnT: 0, lastHurt: -10, speed: PLAYER_SPEED, moving: 0,
+      vel: new THREE.Vector3() // smoothed velocity (accel/decel, not instant)
     }
     this.camYaw = Math.PI // face arena centre (-Z from spawn is... spawn (0,17) centre is -Z)
     this.camYaw = 0 // forward -Z toward centre
     this.camPitch = 0.32
+    this.camYawS = this.camYaw
+    this.camPitchS = this.camPitch
 
     // bots
     this.bots = []
@@ -436,7 +443,8 @@ export class Game {
       this.bots.push({
         char: bc, pos: bc.group.position, yaw: 0, hp: 100, alive: true, respawnT: 0,
         state: 'wander', target: this._randomPoint(), shootCd: 1 + Math.random(),
-        stuckT: 0, lastX: sp.x, lastZ: sp.z, moving: 0, strafeDir: Math.random() < 0.5 ? 1 : -1
+        stuckT: 0, lastX: sp.x, lastZ: sp.z, moving: 0, strafeDir: Math.random() < 0.5 ? 1 : -1,
+        vel: new THREE.Vector3()
       })
     })
 
@@ -617,7 +625,7 @@ export class Game {
 
   _randomPoint() {
     const a = Math.random() * Math.PI * 2
-    const r = 4 + Math.random() * 16
+    const r = 6 + Math.random() * 26
     return { x: Math.cos(a) * r, z: Math.sin(a) * r }
   }
 
@@ -693,7 +701,7 @@ export class Game {
 
     if (this.state === 'ended') {
       const a = t * 0.12
-      this.camera.position.set(Math.sin(a) * 20, 11, Math.cos(a) * 20)
+      this.camera.position.set(Math.sin(a) * 30, 14, Math.cos(a) * 30)
       this.camera.lookAt(0, 0.5, 0)
       this._updateCharactersIdle(dt)
       this._updateParticles(dt)
@@ -761,12 +769,23 @@ export class Game {
       mv.addScaledVector(fwd, -this.touchMove.y)
       mv.addScaledVector(right, this.touchMove.x)
     }
-    const moving = mv.lengthSq() > 0.001 ? 1 : 0
-    p.moving = moving
-    if (moving) {
-      mv.normalize()
-      p.pos.addScaledVector(mv, p.speed * dt)
-      const targetYaw = Math.atan2(mv.x, mv.z)
+    // analog input magnitude: keys = full tilt, joystick = partial tilt
+    // (the old code normalized the stick, so a slight tilt ran at full speed)
+    const mag = Math.min(1, mv.length())
+    const hasInput = mag > 0.02
+    if (hasInput) mv.divideScalar(mag)
+    // smooth velocity: quick attack, gentle release — no robot start/stop
+    if (hasInput) {
+      mv.multiplyScalar(p.speed * mag)
+      p.vel.lerp(mv, 1 - Math.exp(-dt * 12))
+    } else {
+      p.vel.multiplyScalar(Math.exp(-dt * 8))
+    }
+    p.pos.addScaledVector(p.vel, dt)
+    const speedFrac = Math.min(1, p.vel.length() / p.speed)
+    p.moving = speedFrac
+    if (speedFrac > 0.05) {
+      const targetYaw = Math.atan2(p.vel.x, p.vel.z)
       p.char.group.rotation.y = lerpAngle(p.char.group.rotation.y, targetYaw, Math.min(1, dt * 12))
     }
     this._collide(p.pos, 0.55)
@@ -774,7 +793,7 @@ export class Game {
     if (this.elapsed - p.lastHurt > 4 && p.hp < 100) p.hp = Math.min(100, p.hp + 2 * dt)
     // hold-to-fire (mouse drag with pointer lock, or touch fire button)
     if ((this._dragging && document.pointerLockElement === this.canvas) || this._touchFiring) this._tryFire()
-    animateCharacter(p.char.parts, dt, moving)
+    animateCharacter(p.char.parts, dt, p.moving)
   }
 
   _updateBots(dt) {
@@ -815,22 +834,31 @@ export class Game {
         moveTarget = bot.target
       }
 
-      // move
+      // move (smoothed velocity, like the player — no instant direction snaps)
       let moving = 0
       if (moveTarget) {
         const mx = moveTarget.x - bot.pos.x
         const mz = moveTarget.z - bot.pos.z
         const md = Math.hypot(mx, mz)
         if (md > 0.2) {
-          moving = 1
-          bot.pos.x += (mx / md) * BOT_SPEED * dt
-          bot.pos.z += (mz / md) * BOT_SPEED * dt
+          const k = 1 - Math.exp(-dt * 6)
+          bot.vel.x += ((mx / md) * BOT_SPEED - bot.vel.x) * k
+          bot.vel.z += ((mz / md) * BOT_SPEED - bot.vel.z) * k
+          bot.pos.x += bot.vel.x * dt
+          bot.pos.z += bot.vel.z * dt
           const faceYaw = wantShoot
             ? Math.atan2(dx, dz)
             : Math.atan2(mx, mz)
           bot.char.group.rotation.y = lerpAngle(bot.char.group.rotation.y, faceYaw, Math.min(1, dt * 8))
+        } else {
+          bot.vel.x *= Math.exp(-dt * 8)
+          bot.vel.z *= Math.exp(-dt * 8)
         }
+      } else {
+        bot.vel.x *= Math.exp(-dt * 8)
+        bot.vel.z *= Math.exp(-dt * 8)
       }
+      moving = Math.min(1, Math.hypot(bot.vel.x, bot.vel.z) / BOT_SPEED)
       bot.moving = moving
       this._collide(bot.pos, 0.55)
 
@@ -955,16 +983,20 @@ export class Game {
 
   _updateCamera(dt) {
     if (!this.player) return
+    // smooth-follow the aim: input sets the target, the camera eases after it
+    const ky = 1 - Math.exp(-dt * 14)
+    this.camYawS = lerpAngle(this.camYawS, this.camYaw, ky)
+    this.camPitchS += (this.camPitch - this.camPitchS) * ky
     const p = this.player.pos
     const dist = 6.8
-    const cx = p.x + Math.sin(this.camYaw) * Math.cos(this.camPitch) * dist
-    const cz = p.z + Math.cos(this.camYaw) * Math.cos(this.camPitch) * dist
-    const cy = p.y + 1.2 + Math.sin(this.camPitch) * dist + 1.6
+    const cx = p.x + Math.sin(this.camYawS) * Math.cos(this.camPitchS) * dist
+    const cz = p.z + Math.cos(this.camYawS) * Math.cos(this.camPitchS) * dist
+    const cy = p.y + 1.2 + Math.sin(this.camPitchS) * dist + 1.6
     this.camera.position.set(cx, Math.max(0.7, cy), cz)
     const look = new THREE.Vector3(
-      p.x - Math.sin(this.camYaw) * 2.5,
+      p.x - Math.sin(this.camYawS) * 2.5,
       p.y + 1.35,
-      p.z - Math.cos(this.camYaw) * 2.5
+      p.z - Math.cos(this.camYawS) * 2.5
     )
     this.camera.lookAt(look)
   }

@@ -220,14 +220,21 @@ export function createCharacter(def) {
 
 /** Walk / idle animation. `moving` 0..1, dt seconds. */
 export function animateCharacter(parts, dt, moving) {
-  parts.walkPhase += dt * (moving > 0.05 ? 11 : 2.2)
+  // `moving` is now a 0..1 speed fraction (bots still pass 0/1): walk
+  // speed, bob and lean all scale with it, so a half-tilt stick walks
+  // instead of sprinting, and stops ease out instead of freezing.
+  const amt = Math.min(1, Math.max(0, moving))
+  parts.walkPhase += dt * (2.2 + amt * 8.8)
   const ph = parts.walkPhase
-  const bob = moving > 0.05 ? Math.abs(Math.sin(ph)) * 0.07 : Math.sin(ph * 0.5) * 0.015
+  const bob = amt > 0.05 ? Math.abs(Math.sin(ph)) * 0.07 * amt : Math.sin(ph * 0.5) * 0.015
   parts.body.position.y = 0.52 + bob
   parts.head.position.y = 1.06 + bob * 1.2
-  parts.footL.position.y = 0.09 + (moving > 0.05 ? Math.max(0, Math.sin(ph)) * 0.14 : 0)
-  parts.footR.position.y = 0.09 + (moving > 0.05 ? Math.max(0, -Math.sin(ph)) * 0.14 : 0)
-  parts.armL.rotation.x = moving > 0.05 ? Math.sin(ph) * 0.5 : Math.sin(ph * 0.5) * 0.08
+  parts.footL.position.y = 0.09 + (amt > 0.05 ? Math.max(0, Math.sin(ph)) * 0.14 * amt : 0)
+  parts.footR.position.y = 0.09 + (amt > 0.05 ? Math.max(0, -Math.sin(ph)) * 0.14 * amt : 0)
+  parts.armL.rotation.x = amt > 0.05 ? Math.sin(ph) * 0.5 * amt : Math.sin(ph * 0.5) * 0.08
+  // forward lean while running + head counter-tilt so the eyes stay level
+  parts.body.rotation.x = amt * 0.09
+  parts.head.rotation.x = -amt * 0.04
   // recoil spring
   parts.recoil = Math.max(0, parts.recoil - dt * 6)
   parts.blaster.position.z = 0.22 - parts.recoil * 0.14

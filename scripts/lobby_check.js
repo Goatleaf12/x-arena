@@ -131,6 +131,11 @@ try {
   if (after.errlog) fail('errlog not empty: ' + after.errlog.slice(0, 200))
 
   // our chat -> server, and our position -> server
+  // (panel starts minimized on touch devices: expand first if needed)
+  if (!(await page.locator('.lobby-chat-input').isVisible())) {
+    await page.click('.lobby-chat-toggle')
+    await sleep(300)
+  }
   await page.fill('.lobby-chat-input', 'halo Tester, Lux di sini')
   await page.press('.lobby-chat-input', 'Enter')
   await sleep(1500)
@@ -141,19 +146,21 @@ try {
   const me = state.occupants.find((o) => o.name === 'LuxTest')
   console.log('server sees us at:', me ? [me.x, me.z] : null)
   if (!me) fail('server does not see our occupant')
-  else if (Math.abs(me.x - 0) > 0.5 || Math.abs(me.z - 17) > 0.5) fail(`our server position wrong (expected spawn ~0,17, got ${me.x},${me.z})`)
-  else ok('our spawn position shared to server (0, 17)')
+  else if (Math.abs(me.x - 0) > 0.5 || Math.abs(me.z - 25.5) > 0.5) fail(`our server position wrong (expected spawn ~0,25.5, got ${me.x},${me.z})`)
+  else ok('our spawn position shared to server (0, 25.5)')
 
   // move with keyboard, verify the server sees the new position
+  // (hold longer than the old 1.2 s: velocity now ramps up smoothly, and
+  // headless SwiftShader game-time runs far slower than real time)
   const before = me ? [me.x, me.z] : [0, 0]
   await page.keyboard.down('KeyW')
-  await sleep(1200)
+  await sleep(2500)
   await page.keyboard.up('KeyW')
   await sleep(1500)
   const state2 = JSON.parse(curl(`${BASE}/lobby/state`))
   const me2 = state2.occupants.find((o) => o.name === 'LuxTest')
   console.log('server sees us after W:', me2 ? [me2.x, me2.z] : null)
-  if (me2 && Math.hypot(me2.x - before[0], me2.z - before[1]) > 0.5) ok('movement shared to server')
+  if (me2 && Math.hypot(me2.x - before[0], me2.z - before[1]) > 0.3) ok('movement shared to server')
   else fail('movement NOT shared (server pos unchanged)')
 
   // (no screenshot: page.screenshot hangs on fonts in this headless

@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { makeGrassTexture, makeSandTexture, makeCrateTexture, makeBarrelTexture, makeBannerTexture } from './textures.js'
 
-export const ARENA_RADIUS = 24
+export const ARENA_RADIUS = 36
 
 function std(color, roughness = 0.8, extra = {}) {
   return new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.02, ...extra })
@@ -58,7 +58,7 @@ export function buildArena(scene) {
 
   // ---- ground ----
   const grass = mesh(
-    new THREE.CircleGeometry(30, 64),
+    new THREE.CircleGeometry(45, 64),
     new THREE.MeshStandardMaterial({ map: makeGrassTexture(), roughness: 0.95 }),
     0, 0, 0, false, true
   )
@@ -66,7 +66,7 @@ export function buildArena(scene) {
   group.add(grass)
   // sand ring near the wall
   const sand = mesh(
-    new THREE.RingGeometry(23.2, 30, 64),
+    new THREE.RingGeometry(34.8, 45, 64),
     new THREE.MeshStandardMaterial({ map: makeSandTexture(), roughness: 1 }),
     0, 0.015, 0, false, true
   )
@@ -76,14 +76,14 @@ export function buildArena(scene) {
   // ---- boundary fence: posts + two rails ----
   const postMat = std(0x0b0e1a, 0.6)
   const railMat = std(0x3b82f6, 0.5, { metalness: 0.25 })
-  for (let i = 0; i < 28; i++) {
-    const a = (i / 28) * Math.PI * 2
-    const x = Math.cos(a) * 25.2, z = Math.sin(a) * 25.2
+  for (let i = 0; i < 40; i++) {
+    const a = (i / 40) * Math.PI * 2
+    const x = Math.cos(a) * 37.8, z = Math.sin(a) * 37.8
     group.add(mesh(new THREE.CylinderGeometry(0.09, 0.11, 1.15, 8), postMat, x, 0.57, z))
     group.add(mesh(new THREE.SphereGeometry(0.12, 10, 8), std(0xf5b301, 0.5), x, 1.2, z))
   }
   for (const y of [0.55, 1.05]) {
-    const rail = mesh(new THREE.TorusGeometry(25.2, 0.05, 8, 80), railMat, 0, y, 0)
+    const rail = mesh(new THREE.TorusGeometry(37.8, 0.05, 8, 80), railMat, 0, y, 0)
     rail.rotation.x = Math.PI / 2
     group.add(rail)
   }
@@ -94,23 +94,24 @@ export function buildArena(scene) {
   for (let i = 0; i < 4; i++) {
     const a = (i / 4) * Math.PI * 2 + Math.PI / 4
     const banner = mesh(
-      new THREE.PlaneGeometry(7.5, 2.8),
+      new THREE.PlaneGeometry(9.5, 3.2),
       new THREE.MeshStandardMaterial({ map: bannerTex, roughness: 0.7, side: THREE.DoubleSide }),
-      Math.cos(a) * 24.6, 2.6, Math.sin(a) * 24.6, false, false
+      Math.cos(a) * 36.9, 2.6, Math.sin(a) * 36.9, false, false
     )
     banner.lookAt(0, 2.6, 0)
     group.add(banner)
     banners.push(banner)
     // banner poles
-    const px = Math.cos(a - 0.15) * 24.9, pz = Math.sin(a - 0.15) * 24.9
-    const qx = Math.cos(a + 0.15) * 24.9, qz = Math.sin(a + 0.15) * 24.9
+    const px = Math.cos(a - 0.15) * 37.35, pz = Math.sin(a - 0.15) * 37.35
+    const qx = Math.cos(a + 0.15) * 37.35, qz = Math.sin(a + 0.15) * 37.35
     group.add(mesh(new THREE.CylinderGeometry(0.07, 0.07, 3.4, 8), postMat, px, 1.7, pz))
     group.add(mesh(new THREE.CylinderGeometry(0.07, 0.07, 3.4, 8), postMat, qx, 1.7, qz))
   }
 
   // ---- palm trees ----
   const palmSpots = [
-    [17, 12, 0.4], [-18, 9, 1.2], [-14, -16, 2.1], [15, -17, 0.9], [20, -3, 1.7], [-20, -2, 2.6]
+    [25.5, 18, 0.4], [-27, 13.5, 1.2], [-21, -24, 2.1], [22.5, -25.5, 0.9],
+    [30, -4.5, 1.7], [-30, -3, 2.6], [10, 28, 2.8], [-28, -22, 0.7]
   ]
   for (const [x, z, rot] of palmSpots) {
     const palm = makePalm()
@@ -124,8 +125,9 @@ export function buildArena(scene) {
   const crateTex = makeCrateTexture()
   const crateMat = new THREE.MeshStandardMaterial({ map: crateTex, roughness: 0.85 })
   const crateSpots = [
-    [8, 8, 0.3], [-8, 6, 0.9], [6, -12, 0.1], [-6, -6, 1.2],
-    [13, 2, 0.6], [-13, 14, 0.2], [2, 18, 1.0], [-2, -18, 0.4]
+    [12, 12, 0.3], [-12, 9, 0.9], [9, -18, 0.1], [-9, -9, 1.2],
+    [19.5, 3, 0.6], [-19.5, 21, 0.2], [3, 27, 1.0], [-3, -27, 0.4],
+    [24, -12, 0.8], [-24, 6, 0.4], [0, -28, 1.1], [-18, -26, 0.2]
   ]
   for (const [x, z, rot] of crateSpots) {
     const crate = mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), crateMat, x, 0.75, z)
@@ -134,14 +136,14 @@ export function buildArena(scene) {
     colliders.push({ x, z, r: 1.15 })
   }
   // one stacked pair for height variety
-  const stack = mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), crateMat, 10.5, 2.25, -6)
+  const stack = mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), crateMat, 15.75, 2.25, -9)
   stack.rotation.y = 0.5
   group.add(stack)
 
   // ---- barrels ----
   const barrelTex = makeBarrelTexture()
   const barrelMat = new THREE.MeshStandardMaterial({ map: barrelTex, roughness: 0.85 })
-  const barrelSpots = [[-4, 12], [12, 12], [-11, -12], [4, -3], [18, 8]]
+  const barrelSpots = [[-6, 18], [18, 18], [-16.5, -18], [6, -4.5], [27, 12], [-27, 18], [30, -18]]
   for (const [x, z] of barrelSpots) {
     group.add(mesh(new THREE.CylinderGeometry(0.55, 0.6, 1.15, 14), barrelMat, x, 0.58, z))
     colliders.push({ x, z, r: 0.75 })
@@ -183,7 +185,7 @@ export function buildArena(scene) {
   const splatCols = [0xff7ab8, 0x3b82f6, 0xf5b301, 0x8b5cf6, 0xff5d6c, 0x34d399]
   for (let i = 0; i < 16; i++) {
     const a = Math.random() * Math.PI * 2
-    const r = 6 + Math.random() * 15
+    const r = 9 + Math.random() * 22
     const splat = mesh(
       new THREE.CircleGeometry(0.5 + Math.random() * 0.9, 12),
       new THREE.MeshStandardMaterial({ color: splatCols[i % splatCols.length], roughness: 0.9, transparent: true, opacity: 0.75 }),
@@ -204,17 +206,18 @@ export function buildArena(scene) {
         cloudMat, j * 1.8 - 1.8, j * 0.3, 0, false, false))
     }
     const a = (i / 5) * Math.PI * 2
-    cloud.position.set(Math.cos(a) * 34, 17 + (i % 3) * 2.5, Math.sin(a) * 34)
+    cloud.position.set(Math.cos(a) * 50, 20 + (i % 3) * 3, Math.sin(a) * 50)
     cloud.scale.setScalar(1.4 + (i % 2) * 0.5)
     scene.add(cloud)
     clouds.push(cloud)
   }
 
   const spawnPoints = [
-    { x: 0, z: 17 }, { x: -15, z: -9 }, { x: 15, z: -9 }, { x: -16, z: 10 }
+    { x: 0, z: 25.5 }, { x: -22.5, z: -13.5 }, { x: 22.5, z: -13.5 }, { x: -24, z: 15 }
   ]
   const coinSpots = [
-    { x: 9, z: -2 }, { x: -9, z: -2 }, { x: 0, z: -14 }, { x: -4, z: 14 }, { x: 12, z: 14 }
+    { x: 13.5, z: -3 }, { x: -13.5, z: -3 }, { x: 0, z: -21 }, { x: -6, z: 21 },
+    { x: 18, z: 21 }, { x: -18, z: -21 }, { x: 24, z: 12 }, { x: -27, z: -6 }, { x: 6, z: 28 }
   ]
 
   function update(dt, t) {

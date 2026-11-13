@@ -195,6 +195,24 @@ export class LobbyClient {
 export function createChatPanel(container, client, { maxMessages = 100 } = {}) {
   if (!container) throw new Error("createChatPanel needs a container element");
   container.classList.add("lobby-chat");
+  // Header with minimize toggle: on phones the panel starts minimized so
+  // it never blocks the arena view (Hans 2026-11-14: "chat nya ngakangin").
+  // Tap the header to expand/collapse; new messages while minimized show
+  // an unread count badge on the header.
+  const isTouch = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
+  const head = document.createElement("div");
+  head.className = "lobby-chat-head";
+  const title = document.createElement("span");
+  title.className = "lobby-chat-title";
+  title.textContent = "💬 Lobby chat";
+  const badge = document.createElement("span");
+  badge.className = "lobby-chat-badge hidden";
+  badge.textContent = "0";
+  const toggleBtn = document.createElement("button");
+  toggleBtn.type = "button";
+  toggleBtn.className = "lobby-chat-toggle";
+  toggleBtn.textContent = "−";
+  head.append(title, badge, toggleBtn);
   const feed = document.createElement("div");
   feed.className = "lobby-chat-feed";
   const form = document.createElement("form");
@@ -209,7 +227,26 @@ export function createChatPanel(container, client, { maxMessages = 100 } = {}) {
   send.type = "submit";
   send.textContent = "Send";
   form.append(input, send);
-  container.append(feed, form);
+  container.append(head, feed, form);
+
+  let minimized = false;
+  let unread = 0;
+  function setMinimized(next) {
+    minimized = next;
+    container.classList.toggle("lobby-chat-min", minimized);
+    toggleBtn.textContent = minimized ? "+" : "−";
+    toggleBtn.setAttribute("aria-label", minimized ? "Expand chat" : "Minimize chat");
+    if (!minimized) {
+      unread = 0;
+      badge.classList.add("hidden");
+    }
+  }
+  toggleBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    setMinimized(!minimized);
+  });
+  head.addEventListener("click", () => setMinimized(!minimized));
+  if (isTouch) setMinimized(true);
 
   const seen = new Set();
   function timeOf(ts) {
@@ -235,6 +272,11 @@ export function createChatPanel(container, client, { maxMessages = 100 } = {}) {
     feed.appendChild(row);
     while (feed.children.length > maxMessages) feed.removeChild(feed.firstChild);
     feed.scrollTop = feed.scrollHeight;
+    if (minimized) {
+      unread += 1;
+      badge.textContent = String(unread);
+      badge.classList.remove("hidden");
+    }
   }
   function render() {
     for (const m of client.state.chat ?? []) addMessage(m);
@@ -254,6 +296,7 @@ export function createChatPanel(container, client, { maxMessages = 100 } = {}) {
   });
   return {
     render,
+    setMinimized,
     destroy() {
       client.onState = prevOnState;
       container.replaceChildren();
